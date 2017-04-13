@@ -109,10 +109,10 @@ RioQueueDiscTestCase::RunRioTest (StringValue mode)
   uint32_t pktSize = 0;
   // 1 for packets; pktSize for bytes
   uint32_t modeSize = 1;
-  double minThIn = 2;
-  double maxThIn = 5;
-  double minThOut = 2;
-  double maxThOut = 5;
+  double minThIn = 6;
+  double maxThIn = 12;
+  double minThOut = 3;
+  double maxThOut = 6;
   uint32_t qSize = 8;
   Ptr<RioQueueDisc> queue = CreateObject<RioQueueDisc> ();
 
@@ -196,10 +196,10 @@ RioQueueDiscTestCase::RunRioTest (StringValue mode)
 
   // test 2: more data, but with no drops
   queue = CreateObject<RioQueueDisc> ();
-  minThIn = 70 * modeSize;
-  maxThIn = 150 * modeSize;
-  minThOut = 70 * modeSize;
-  maxThOut = 150 * modeSize;
+  minThIn = 120 * modeSize;
+  maxThIn = 240 * modeSize;
+  minThOut = 40 * modeSize;
+  maxThOut = 120 * modeSize;
   qSize = 300 * modeSize;
   NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("Mode", mode), true,
                          "Verify that we can actually set the attribute Mode");
@@ -254,7 +254,7 @@ RioQueueDiscTestCase::RunRioTest (StringValue mode)
 
 
   // test 4: riouced maxTh, this causes more drops
-  maxThIn = 100 * modeSize;
+  maxThIn = 200 * modeSize;
   maxThOut = 100 * modeSize;
   queue = CreateObject<RioQueueDisc> ();
   NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("Mode", mode), true,
@@ -296,10 +296,8 @@ RioQueueDiscTestCase::RunRioTest (StringValue mode)
                          "Verify that we can actually set the attribute QueueLimit");
   NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("QW", DoubleValue (0.020)), true,
                          "Verify that we can actually set the attribute QW");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("LIntermIn", DoubleValue (5)), true,
-                         "Verify that we can actually set the attribute LIntermIn");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("LIntermOut", DoubleValue (5)), true,
-                         "Verify that we can actually set the attribute LIntermIn");
+  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("LInterm", DoubleValue (5)), true,
+                         "Verify that we can actually set the attribute LInterm");
   queue->Initialize ();
   Enqueue (queue, pktSize, 300, false);
   st = StaticCast<RioQueueDisc> (queue)->GetStats ();
@@ -323,10 +321,8 @@ RioQueueDiscTestCase::RunRioTest (StringValue mode)
                          "Verify that we can actually set the attribute QueueLimit");
   NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("QW", DoubleValue (0.020)), true,
                          "Verify that we can actually set the attribute QW");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("GentleIn", BooleanValue (false)), true,
-                         "Verify that we can actually set the attribute GentleIn");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("GentleOut", BooleanValue (false)), true,
-                         "Verify that we can actually set the attribute GentleOut");
+  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("Gentle", BooleanValue (false)), true,
+                         "Verify that we can actually set the attribute Gentle");
   queue->Initialize ();
   Enqueue (queue, pktSize, 300, false);
   st = StaticCast<RioQueueDisc> (queue)->GetStats ();
@@ -379,14 +375,10 @@ RioQueueDiscTestCase::RunRioTest (StringValue mode)
                          "Verify that we can actually set the attribute QueueLimit");
   NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("QW", DoubleValue (0.002)), true,
                          "Verify that we can actually set the attribute QW");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("LIntermIn", DoubleValue (2)), true,
-                         "Verify that we can actually set the attribute LIntermIn");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("LIntermOut", DoubleValue (2)), true,
-                         "Verify that we can actually set the attribute LIntermOut");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("GentleIn", BooleanValue (true)), true,
-                         "Verify that we can actually set the attribute GentleIn");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("GentleOut", BooleanValue (true)), true,
-                         "Verify that we can actually set the attribute GentleOut");
+  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("LInterm", DoubleValue (2)), true,
+                         "Verify that we can actually set the attribute LInterm");
+  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("Gentle", BooleanValue (true)), true,
+                         "Verify that we can actually set the attribute Gentle");
   NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("UseEcn", BooleanValue (true)), true,
                          "Verify that we can actually set the attribute UseECN");
   queue->Initialize ();
@@ -413,14 +405,10 @@ RioQueueDiscTestCase::RunRioTest (StringValue mode)
                          "Verify that we can actually set the attribute QueueLimit");
   NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("QW", DoubleValue (0.002)), true,
                          "Verify that we can actually set the attribute QW");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("LIntermIn", DoubleValue (2)), true,
-                         "Verify that we can actually set the attribute LIntermIn");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("LIntermOut", DoubleValue (2)), true,
-                         "Verify that we can actually set the attribute LIntermOut");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("GentleIn", BooleanValue (true)), true,
-                         "Verify that we can actually set the attribute GentleIn");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("GentleOut", BooleanValue (true)), true,
-                         "Verify that we can actually set the attribute GentleOut");
+  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("LInterm", DoubleValue (2)), true,
+                         "Verify that we can actually set the attribute LInterm");
+  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("Gentle", BooleanValue (true)), true,
+                         "Verify that we can actually set the attribute Gentle");
   NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("UseEcn", BooleanValue (false)), true,
                          "Verify that we can actually set the attribute UseECN");
   queue->Initialize ();
@@ -447,14 +435,10 @@ RioQueueDiscTestCase::RunRioTest (StringValue mode)
                          "Verify that we can actually set the attribute QueueLimit");
   NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("QW", DoubleValue (0.002)), true,
                          "Verify that we can actually set the attribute QW");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("LIntermIn", DoubleValue (2)), true,
-                         "Verify that we can actually set the attribute LIntermIn");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("LIntermOut", DoubleValue (2)), true,
-                         "Verify that we can actually set the attribute LIntermOut");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("GentleIn", BooleanValue (true)), true,
-                         "Verify that we can actually set the attribute GentleIn");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("GentleOut", BooleanValue (true)), true,
-                         "Verify that we can actually set the attribute GentleOut");
+  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("LInterm", DoubleValue (2)), true,
+                         "Verify that we can actually set the attribute LInterm");
+  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("Gentle", BooleanValue (true)), true,
+                         "Verify that we can actually set the attribute Gentle");
   NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("UseEcn", BooleanValue (true)), true,
                          "Verify that we can actually set the attribute UseECN");
   queue->Initialize ();
