@@ -201,11 +201,14 @@ RioQueueDisc::AssignStreams (int64_t stream)
   return 1;
 }
 
-/* m_idle,m_idletime*/
-/*Same as DoDequeue function of RED in ns3 */
+
+/* variables added m_idleIn, m_countBytesIn, nQueuedIn */
+
 Ptr<QueueDiscItem>
-RioQueueDisc::DequeueRED (void)
+RioQueueDisc::DoDequeue (void)
 {
+  Ptr<QueueDiscItem> p;
+
   NS_LOG_FUNCTION (this);
 
   if (GetInternalQueue (0)->IsEmpty ())
@@ -214,7 +217,7 @@ RioQueueDisc::DequeueRED (void)
       m_idle = 1;
       m_idleTime = Simulator::Now ();
 
-      return 0;
+      p=0;
     }
   else
     {
@@ -226,19 +229,13 @@ RioQueueDisc::DequeueRED (void)
       NS_LOG_LOGIC ("Number packets " << GetInternalQueue (0)->GetNPackets ());
       NS_LOG_LOGIC ("Number bytes " << GetInternalQueue (0)->GetNBytes ());
 
-      return item;
+      p=item;
     }
-}
 
-/* variables added m_idleIn, m_countBytesIn, nQueuedIn */
-
-Ptr<QueueDiscItem>
-RioQueueDisc::DoDequeue (void)
-{
-  Ptr<QueueDiscItem> p = DequeueRED ();
   if (p != 0)
     {
-      /* insert ns3 euivalent */
+     
+      m_flow = Classify(p);
 
       if (m_flow)
         {
@@ -988,4 +985,3 @@ RioQueueDisc::InitializeParams (void)
                              <<  "; m_vCIn " << m_vCIn <<  "; m_vCOut " << m_vCOut
                              << "; m_vDIn " <<  m_vDIn << "; m_vDOut " <<  m_vDOut);
 }
-} // namespace ns3

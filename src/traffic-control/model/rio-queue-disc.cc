@@ -235,6 +235,8 @@ RioQueueDisc::DoDequeue (void)
   if (p != 0)
     {
      
+      m_flow = Classify(p);
+
       if (m_flow)
         {
           /* Regular In packets */
