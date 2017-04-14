@@ -7,6 +7,8 @@
 #include "rio-queue-disc.h"
 #include "ns3/drop-tail-queue.h"
 #include "ns3/net-device-queue-interface.h"
+//#include "ns3/flow-monitor-module.h"
+#include <map>
 
 namespace ns3 {
 
@@ -115,6 +117,11 @@ TypeId RioQueueDisc::GetTypeId (void)
                    UintegerValue (1),
                    MakeUintegerAccessor (&RioQueueDisc::SetPriorityMethod),
                    MakeUintegerChecker<uint32_t> ())
+    .AddAttribute ("TargetRate",
+                   "Flows with flow rate greater than target rate are OUT",
+                   DoubleValue (1),
+                   MakeDoubleAccessor (&RioQueueDisc::m_targetRate),
+                   MakeDoubleChecker<double> ())
   ;
 
   return tid;
@@ -197,6 +204,58 @@ RioQueueDisc::AssignStreams (int64_t stream)
 }
 
 
+
+bool RioQueueDisc::In_or_Out(Ptr<QueueDiscItem> item )
+{
+
+	uint32_t flowid;
+	flowid = Classify(item);
+  	
+  	if(flow_map.find(flowid)==flow_map.end())
+ 	{
+ 	   flow_info temp;
+ 	   flow_map[flowid]=temp;
+ 	}
+ 	
+ 	
+ 	
+ 	/*
+ 	//Ptr<FlowMonitor> object;
+ 	FlowMonitorHelper flowmon;
+ 	Ptr<FlowMonitor> object = flowmon.InstallAll ();
+        //FlowMonitor::FlowStats &flowstats=object->GetFlowStats();
+        //object->CheckForLostPackets ();
+  	std::map<FlowId, FlowMonitor::FlowStats> stats = object->GetFlowStats ();
+	for (std::map<FlowId, FlowMonitor:>::const_iterator i=stats.begin(); 
+        i!=stats.end(); ++i)
+	  {   
+	    std::cout << "  Tx Bytes:   " << i->second.txBytes << "\n";
+	    std::cout << "  Rx Bytes:   " << i->second.rxBytes << "\n";
+	    std::cout << "  Tx Packets: " << i->second.txPackets << "\n";
+	    std::cout << "  Rx Packets: " << i->second.rxPackets << "\n";
+	    std::cout << "  Lost Packets: " << i->second.lostPackets << "\n";
+	    std::cout << "  Pkt Lost Ratio: " << ((double)i->second.txPackets-(double)i->second.rxPackets)/(double)i->second.txPackets << "\n";
+		}  
+	*/
+	
+	
+	Time now=Simulator::Now();
+	
+	std::map <uint32_t,uint32_t> flowstats;
+	
+	flowstats[flowid] += item->GetSize ();//
+	
+ 	flow_map[flowid].avg_rate=(flowstats[flowid]-flow_map[flowid].rx_bytes)/ (double)(now-flow_map[flowid].t_front).GetSeconds();
+ 	flow_map[flowid].t_front=now;
+        flow_map[flowid].rx_bytes=flowstats[flowid];
+
+    if(flow_map[flowid].avg_rate <= m_targetRate)
+       return true;
+    else 
+       return false;
+       
+}
+
 /* variables added m_idleIn, m_countBytesIn, nQueuedIn */
 
 Ptr<QueueDiscItem>
@@ -230,7 +289,7 @@ RioQueueDisc::DoDequeue (void)
   if (p != 0)
     {
      
-      m_flow = Classify(p);
+      m_flow = In_or_Out(p);
       if (m_flow)
         {
           /* Regular In packets */
@@ -304,9 +363,9 @@ bool RioQueueDisc::DoEnqueue (Ptr<QueueDiscItem> item)
   if (m_priorityMethod == 1)
     {
       /*Add ns3 equivalent */
-      m_flow = Classify (item);
+      m_flow = In_or_Out (item);
     }
-
+  
   uint32_t qLen;
   uint32_t qLenIn;
 

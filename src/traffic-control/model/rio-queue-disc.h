@@ -62,6 +62,9 @@ public:
     uint32_t forcedMark;                //!< Forced marks, qavg > max threshold
   } Stats;
 
+  /* tells whether pkt is In or Out*/
+  bool In_or_Out(Ptr<QueueDiscItem> item );
+  
   /**
    * \brief Drop types
    */
@@ -227,12 +230,13 @@ private:
   bool m_useHardDrop;       //!< True if packets are always dropped above max threshold
   double m_lIntermIn;         //!< The max probability of dropping a packet
   double m_lIntermOut;         //!< The max probability of dropping a packet
+  double m_targetRate;         //!< Target rate above which pkts are OUT, else IN
 
 
   // ** Variables maintained by RIO
   double m_curMaxPIn;         //!< Current max_p
   double m_curMaxPOut;         //!< Current max_p
-  int32_t m_flow;                       //flowid
+  bool m_flow;                       //flowid
   double m_vProb1Out;          //!< Prob. of packet drop before "count"
   double m_vAOut;              //!< 1.0 / (m_maxTh - m_minTh)
   double m_vBOut;              //!< -m_minTh / (m_maxTh - m_minTh)
