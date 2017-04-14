@@ -16,66 +16,66 @@ class TraceContainer;
  *
  * \brief A RIO packet queue disc
  */
- 
- class RioQueueDisc : public QueueDisc
+
+class RioQueueDisc : public QueueDisc
 {
 public:
-	static TypeId GetTypeId (void);
-	  /**
-	   * \brief RioQueueDisc Constructor
-	   *
-	   * Create a RIO queue disc
-	   */
-	  RioQueueDisc ();
-	
-	  /**
-	   * \brief Destructor
-	   *
-	   * Destructor
-	   */ 
+  static TypeId GetTypeId (void);
+  /**
+   * \brief RioQueueDisc Constructor
+   *
+   * Create a RIO queue disc
+   */
+  RioQueueDisc ();
 
-	  virtual ~RioQueueDisc ();
+  /**
+   * \brief Destructor
+   *
+   * Destructor
+   */
 
-
-
-	  /**
-	   * \brief Stats
-	   */
-	  typedef struct
-  		{   
-    		uint32_t unforcedDrop;  //!< Early probability drops
-    		uint32_t forcedDrop;    //!< Forced drops, qavg > max threshold
-    		uint32_t qLimDrop;      //!< Drops due to queue limits
-    		uint32_t unforcedMark;  //!< Early probability marks
-    		uint32_t forcedMark;    //!< Forced marks, qavg > max threshold
-  		} Stats;
-
-	  /** 
-	   * \brief Drop types
-	   */
-	  enum
-	  {
-	    DTYPE_NONE,        //!< Ok, no drop
-	    DTYPE_FORCED,      //!< A "forced" drop
-	    DTYPE_UNFORCED,    //!< An "unforced" (random) drop
-	  };
-
-	  /**
-	   * \brief Enumeration of the modes supported in the class.
-	   *
-	   */
-	  enum QueueDiscMode
-	  {
-	    QUEUE_DISC_MODE_PACKETS,     /**< Use number of packets for maximum queue disc size */
-	    QUEUE_DISC_MODE_BYTES,       /**< Use number of bytes for maximum queue disc size */
-	  };
+  virtual ~RioQueueDisc ();
 
 
-	  /**
-	   * \brief Set the operating mode of this queue disc.
-	   *
-	   * \param mode The operating mode of this queue disc.
-	   */
+
+  /**
+   * \brief Stats
+   */
+  typedef struct
+  {
+    uint32_t unforcedDrop;              //!< Early probability drops
+    uint32_t forcedDrop;                //!< Forced drops, qavg > max threshold
+    uint32_t qLimDrop;                  //!< Drops due to queue limits
+    uint32_t unforcedMark;              //!< Early probability marks
+    uint32_t forcedMark;                //!< Forced marks, qavg > max threshold
+  } Stats;
+
+  /**
+   * \brief Drop types
+   */
+  enum
+  {
+    DTYPE_NONE,                //!< Ok, no drop
+    DTYPE_FORCED,              //!< A "forced" drop
+    DTYPE_UNFORCED,            //!< An "unforced" (random) drop
+  };
+
+  /**
+   * \brief Enumeration of the modes supported in the class.
+   *
+   */
+  enum QueueDiscMode
+  {
+    QUEUE_DISC_MODE_PACKETS,             /**< Use number of packets for maximum queue disc size */
+    QUEUE_DISC_MODE_BYTES,               /**< Use number of bytes for maximum queue disc size */
+  };
+
+
+  /**
+   * \brief Set the operating mode of this queue disc.
+   *
+   * \param mode The operating mode of this queue disc.
+   */
 
   void SetMode (QueueDiscMode mode);
 
@@ -114,16 +114,16 @@ public:
    *
    * \returns The drop statistics.
    */
-   Stats GetStats ();
+  Stats GetStats ();
 
-   int64_t AssignStreams (int64_t stream);
+  int64_t AssignStreams (int64_t stream);
 protected:
   /**
    * \brief Dispose of the object
    */
   virtual void DoDispose (void);
 
-private:	       
+private:
   virtual bool DoEnqueue (Ptr<QueueDiscItem> item);
   virtual Ptr<QueueDiscItem> DequeueRED (void);
   virtual Ptr<QueueDiscItem> DoDequeue (void);
@@ -139,9 +139,9 @@ private:
    * and didn't seem worth the trouble...
    */
   virtual void InitializeParams (void);
-  
-  
-  
+
+
+
   /**
    * \brief Compute the average queue size
    * \param nQueued number of queued packets
@@ -151,7 +151,7 @@ private:
    * \returns new average queue size
    */
   double Estimator (uint32_t nQueued, uint32_t m, double qAvg, double qW);
-  
+
   /**
    * \brief Check if a IN packet needs to be dropped due to probability mark
    * \param item queue item
@@ -159,7 +159,7 @@ private:
    * \returns 0 for no drop/mark, 1 for drop
    */
   uint32_t DropInEarly (Ptr<QueueDiscItem> item, uint32_t qSize);
-  
+
   /**
    * \brief Check if a OUT packet needs to be dropped due to probability mark
    * \param item queue item
@@ -167,7 +167,7 @@ private:
    * \returns 0 for no drop/mark, 1 for drop
    */
   uint32_t DropOutEarly (Ptr<QueueDiscItem> item, uint32_t qSize);
-  
+
   /**
    * \brief Returns a probability using these function parameters for the DropEarly function
    * \param qAvg Average queue length
@@ -180,7 +180,7 @@ private:
    * \param maxP max_p
    * \returns Prob. of packet drop before "count"
    */
-  double CalculatePNew (double qAvg, double , bool gentle, double vA,
+  double CalculatePNew (double qAvg, double, bool gentle, double vA,
                         double vB, double vC, double vD, double maxP);
   /**
    * \brief Returns a probability using these function parameters for the DropEarly function
@@ -216,12 +216,12 @@ private:
   bool m_useHardDrop;       //!< True if packets are always dropped above max threshold
   double m_lIntermIn;         //!< The max probability of dropping a packet
   double m_lIntermOut;         //!< The max probability of dropping a packet
-  
 
- // ** Variables maintained by RIO
+
+  // ** Variables maintained by RIO
   double m_curMaxPIn;         //!< Current max_p
   double m_curMaxPOut;         //!< Current max_p
-  int32_t m_flow;			//flowid
+  int32_t m_flow;                       //flowid
   double m_vProb1Out;          //!< Prob. of packet drop before "count"
   double m_vAOut;              //!< 1.0 / (m_maxTh - m_minTh)
   double m_vBOut;              //!< -m_minTh / (m_maxTh - m_minTh)
@@ -250,17 +250,17 @@ private:
   Time m_idleTime;          //!< Start of current idle period
 
   Ptr<UniformRandomVariable> m_uv;  //!< rng stream
- 
-  uint32_t inlen;	/* In Packets count */
-  uint32_t inbcount;	/* In packets byte count */
-  
-  uint32_t m_priorityMethod;	/* 0 to leave priority field in header, */
-				/*  1 to use flowid as priority.  */
+
+  uint32_t inlen;       /* In Packets count */
+  uint32_t inbcount;    /* In packets byte count */
+
+  uint32_t m_priorityMethod;    /* 0 to leave priority field in header, */
+                                /*  1 to use flowid as priority.  */
 
 
 };
- 
- 
- }; // namespace ns3
+
+
+};  // namespace ns3
 
 #endif // RIO_QUEUE_DISC_H

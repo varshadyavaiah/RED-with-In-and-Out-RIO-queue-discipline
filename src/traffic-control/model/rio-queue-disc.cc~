@@ -10,14 +10,14 @@
 
 namespace ns3 {
 
-	NS_LOG_COMPONENT_DEFINE ("RioQueueDisc");
-	NS_OBJECT_ENSURE_REGISTERED (RioQueueDisc);
+NS_LOG_COMPONENT_DEFINE ("RioQueueDisc");
+NS_OBJECT_ENSURE_REGISTERED (RioQueueDisc);
 
 TypeId RioQueueDisc::GetTypeId (void)
 {
   static TypeId tid = TypeId ("ns3::RioQueueDisc")
     .SetParent<QueueDisc> ()
-    .SetGroupName("TrafficControl")
+    .SetGroupName ("TrafficControl")
     .AddConstructor<RioQueueDisc> ()
     .AddAttribute ("Mode",
                    "Determines unit for QueueLimit",
@@ -95,12 +95,12 @@ TypeId RioQueueDisc::GetTypeId (void)
                    BooleanValue (false),
                    MakeBooleanAccessor (&RioQueueDisc::m_isNs1Compat),
                    MakeBooleanChecker ())
-    .AddAttribute ("LinkBandwidth", 
+    .AddAttribute ("LinkBandwidth",
                    "The RIO link bandwidth",
                    DataRateValue (DataRate ("1.5Mbps")),
                    MakeDataRateAccessor (&RioQueueDisc::m_linkBandwidth),
                    MakeDataRateChecker ())
-    .AddAttribute ("LinkDelay", 
+    .AddAttribute ("LinkDelay",
                    "The RIO link delay",
                    TimeValue (MilliSeconds (20)),
                    MakeTimeAccessor (&RioQueueDisc::m_linkDelay),
@@ -117,16 +117,16 @@ TypeId RioQueueDisc::GetTypeId (void)
                    MakeBooleanChecker ())
     .AddAttribute ("PriorityMethod",
                    "0 to leave priority field in header, 1 to use flowid as priority.",
-                   UintegerValue (25),
-                   MakeUintegerAccessor (&RioQueueDisc::SetQueueLimit),
+                   UintegerValue (1),
+                   MakeUintegerAccessor (&RioQueueDisc::SetPriorityMethod),
                    MakeUintegerChecker<uint32_t> ())
   ;
 
   return tid;
 }
 
-RioQueueDisc::RioQueueDisc () :
-  QueueDisc ()
+RioQueueDisc::RioQueueDisc ()
+  : QueueDisc ()
 {
   NS_LOG_FUNCTION (this);
   m_uv = CreateObject<UniformRandomVariable> ();
@@ -167,6 +167,13 @@ RioQueueDisc::SetQueueLimit (uint32_t lim)
 }
 
 void
+RioQueueDisc::SetPriorityMethod (uint32_t pri)
+{
+  NS_LOG_FUNCTION (this << pri);
+  m_priorityMethod = pri;
+}
+
+void
 RioQueueDisc::SetTh (double minThIn, double maxThIn,double minThOut, double maxThOut)
 {
   NS_LOG_FUNCTION (this << minThIn << maxThIn << minThOut << maxThOut);
@@ -186,7 +193,7 @@ RioQueueDisc::GetStats ()
 }
 
 
-int64_t 
+int64_t
 RioQueueDisc::AssignStreams (int64_t stream)
 {
   NS_LOG_FUNCTION (this << stream);
@@ -228,20 +235,24 @@ RioQueueDisc::DequeueRED (void)
 Ptr<QueueDiscItem>
 RioQueueDisc::DoDequeue (void)
 {
-  Ptr<QueueDiscItem> p=DequeueRED();
-  if (p != 0) {
-		/* insert ns3 euivalent */
-		
-                if (m_flow) {  
-		  /* Regular In packets */
-                  m_idleIn = 0;
-		  inbcount -= p->GetSize();
-		  --inlen;
-		}
-	} else {
-                m_idleIn = 1;
-	}
-	return (p);
+  Ptr<QueueDiscItem> p = DequeueRED ();
+  if (p != 0)
+    {
+      /* insert ns3 euivalent */
+
+      if (m_flow)
+        {
+          /* Regular In packets */
+          m_idleIn = 0;
+          inbcount -= p->GetSize ();
+          --inlen;
+        }
+    }
+  else
+    {
+      m_idleIn = 1;
+    }
+  return (p);
 }
 
 
@@ -250,9 +261,9 @@ RioQueueDisc::Estimator (uint32_t nQueued, uint32_t m, double qAvg, double qW)
 {
   NS_LOG_FUNCTION (this << nQueued << m << qAvg << qW);
 
-  double newAve = qAvg * pow(1.0-qW, m);
+  double newAve = qAvg * pow (1.0 - qW, m);
   newAve += qW * nQueued;
- 
+
   return newAve;
 }
 
@@ -295,296 +306,323 @@ RioQueueDisc::GetQueueSize (void)
 /* Variables used m_priorityMethod, m_inidle,m_idle,m_idletime,m_qavg,m_inqavg,m_incount,m_incountbytes,m_outminth,m_outmaxth,m_outisgentle,moutold,moutcount,moutcountbytes */
 bool RioQueueDisc::DoEnqueue (Ptr<QueueDiscItem> item)
 {
-        /* Duplicate the RED algorithm to carry out a separate
-         * calculation for Out packets -- Wenjia */
-	/*Add ns3 equivalent */
-	
-	if (m_priorityMethod == 1) {
-	/*Add ns3 equivalent */
-		m_flow = Classify(item);
-	}
+  /* Duplicate the RED algorithm to carry out a separate
+   * calculation for Out packets -- Wenjia */
+  /*Add ns3 equivalent */
 
-    uint32_t qLen;
-       uint32_t qLenIn;
-
-	  if (GetMode () == QUEUE_DISC_MODE_BYTES)
+  if (m_priorityMethod == 1)
     {
-      
-          qLen=GetInternalQueue (0)->GetNBytes ();
-      	  qLenIn= inbcount;
-    } else{
-		qLen= GetInternalQueue (0)->GetNPackets ();	
-        qLenIn=inlen;
-	}
-    /*Add ns3 equivalent */
+      /*Add ns3 equivalent */
+      m_flow = Classify (item);
+    }
 
-	uint32_t m = 0;
-    Time now = Simulator::Now ();
-	if (m_idle) {
-                m_idle = 0;
-                m = uint32_t(m_ptc * (now - m_idleTime).GetSeconds ());
-        }
-    m_qAvg = Estimator (qLen,m+1,m_qAvg, m_qW);
+  uint32_t qLen;
+  uint32_t qLenIn;
 
-    if (m_flow) {  /* Regular In packets */
-
-	/*
-	 * if we were idle, we pretend that m packets arrived during
-	 * the idle period.  m is set to be the ptc times the amount
-	 * of time we've been idle for
-	 */
-
-	
-	uint32_t m_in = 0;
-	
-        /* To account for the period when the queue was empty.  */
-	if (m_idleIn) {
-		m_idleIn = 0;
-		m_in = uint32_t(m_ptc * (now - m_idleTime).GetSeconds ());
-	} 
-	
-
-	/*
-	 * Run the estimator with either 1 new packet arrival, or with
-	 * the scaled version above [scaled by m due to idle time]
-	 */
-
-        // printf( "qlen %d\n", q_->length());
-
-       
-	
-	m_qAvgIn = Estimator (qLenIn,m_in+1,m_qAvgIn, m_qW); 
-
-	/*
-	 * count and count_bytes keeps a tally of arriving traffic
-	 * that has not been dropped (i.e. how long, in terms of traffic,
-	 * it has been since the last early drop)
-	 */
-
-	++m_count;
-	m_countBytes += item->GetSize ();
-
-       ++m_countIn;
-	  m_countBytesIn += item->GetSize ();
-
-    /*
-           * DROP LOGIC:
-           *    q = current q size, ~q = averaged q size
-           *    1> if ~q > maxthresh, this is a FORCED drop
-           *    2> if minthresh < ~q < maxthresh, this may be an UNFORCED drop
-           *    3> if (q+1) > hard q limit, this is a FORCED drop
-           */
-
-                /* if the average queue is below the out_th_min
-                 * then we have no need to worry.
-                 */
-
-          
-          // register double in_qavg = edv_in_.v_ave;
-          uint32_t dropType = DTYPE_NONE;
-                
-
-          if (m_qAvgIn >= m_minThIn && qLenIn > 1) {
-                  if ((!m_isGentleIn && m_qAvgIn >= m_maxThIn) ||
-		      (m_isGentleIn && m_qAvgIn >= 2 * m_maxThIn)) {
-                        dropType = DTYPE_FORCED;  // 
-                  } else if (m_oldIn == 0) {
-/* 
-			 * The average queue size has just crossed the
-			 * threshold from below to above "minthresh", or
-			 * from above "minthresh" with an empty queue to
-			 * above "minthresh" with a nonempty queue.
-			 */
-                        m_countIn = 1;
-                        m_countBytesIn = item->GetSize();
-                        m_oldIn = 1;
-                  } else if (DropInEarly(item,qLen)) {
-                        dropType = DTYPE_UNFORCED; // ? not sure, Yun
-                  }
-          } else {
-                  m_vProbIn = 0.0;
-                  m_oldIn = 0;              // explain
-          }
-          if (qLen >= m_queueLimit) {
-                  // see if we've exceeded the queue size
-                  dropType = DTYPE_FORCED;   //need more consideration, Yun
-          }
-
-          if (dropType == DTYPE_UNFORCED) { //how does ecn work?
-                  if (!m_useEcn || !item->Mark ())
-        {
-          NS_LOG_DEBUG ("\t Dropping In pkt due to Prob Mark " << m_qAvgIn);
-          m_stats.unforcedDrop++;
-          --inlen;
-			inbcount -= item->GetSize();
-          Drop (item);
-          
-          return false;
-        }
-      NS_LOG_DEBUG ("\t Marking In pkt due to Prob Mark " << m_qAvgIn); // where are we marking? 
-      m_stats.unforcedMark++;   
-                   
-                  }
-                 
-           else if (dropType == DTYPE_FORCED)
+  if (GetMode () == QUEUE_DISC_MODE_BYTES)
     {
-      if (m_useHardDrop || !m_useEcn || !item->Mark ())
+
+      qLen = GetInternalQueue (0)->GetNBytes ();
+      qLenIn = inbcount;
+    }
+  else
+    {
+      qLen = GetInternalQueue (0)->GetNPackets ();
+      qLenIn = inlen;
+    }
+  /*Add ns3 equivalent */
+
+  uint32_t m = 0;
+  Time now = Simulator::Now ();
+  if (m_idle)
+    {
+      m_idle = 0;
+      m = uint32_t (m_ptc * (now - m_idleTime).GetSeconds ());
+    }
+  m_qAvg = Estimator (qLen,m + 1,m_qAvg, m_qW);
+
+  if (m_flow)      /* Regular In packets */
+
+    {
+      /*
+       * if we were idle, we pretend that m packets arrived during
+       * the idle period.  m is set to be the ptc times the amount
+       * of time we've been idle for
+       */
+
+
+      uint32_t m_in = 0;
+
+      /* To account for the period when the queue was empty.  */
+      if (m_idleIn)
         {
-          NS_LOG_DEBUG ("\t Dropping In pkt due to Hard Mark " << m_qAvgIn);
-          m_stats.forcedDrop++;
-          --inlen;
-			inbcount -= item->GetSize();
-          Drop (item);
-          if (m_isNs1Compat)
+          m_idleIn = 0;
+          m_in = uint32_t (m_ptc * (now - m_idleTime).GetSeconds ());
+        }
+
+
+      /*
+       * Run the estimator with either 1 new packet arrival, or with
+       * the scaled version above [scaled by m due to idle time]
+       */
+
+      // printf( "qlen %d\n", q_->length());
+
+
+
+      m_qAvgIn = Estimator (qLenIn,m_in + 1,m_qAvgIn, m_qW);
+
+      /*
+       * count and count_bytes keeps a tally of arriving traffic
+       * that has not been dropped (i.e. how long, in terms of traffic,
+       * it has been since the last early drop)
+       */
+
+      ++m_count;
+      m_countBytes += item->GetSize ();
+
+      ++m_countIn;
+      m_countBytesIn += item->GetSize ();
+
+      /*
+             * DROP LOGIC:
+             *    q = current q size, ~q = averaged q size
+             *    1> if ~q > maxthresh, this is a FORCED drop
+             *    2> if minthresh < ~q < maxthresh, this may be an UNFORCED drop
+             *    3> if (q+1) > hard q limit, this is a FORCED drop
+             */
+
+      /* if the average queue is below the out_th_min
+       * then we have no need to worry.
+       */
+
+
+      // register double in_qavg = edv_in_.v_ave;
+      uint32_t dropType = DTYPE_NONE;
+
+
+      if (m_qAvgIn >= m_minThIn && qLenIn > 1)
+        {
+          if ((!m_isGentleIn && m_qAvgIn >= m_maxThIn)
+              || (m_isGentleIn && m_qAvgIn >= 2 * m_maxThIn))
             {
-              m_count = 0;
-              m_countBytes = 0;
-			  m_countIn=0;//added by me, review it
-			  m_countBytesIn=0;//added by me,review it
+              dropType = DTYPE_FORCED;            //
             }
-          return false;
+          else if (m_oldIn == 0)
+            {
+/*
+                         * The average queue size has just crossed the
+                         * threshold from below to above "minthresh", or
+                         * from above "minthresh" with an empty queue to
+                         * above "minthresh" with a nonempty queue.
+                         */
+              m_countIn = 1;
+              m_countBytesIn = item->GetSize ();
+              m_oldIn = 1;
+            }
+          else if (DropInEarly (item,qLen))
+            {
+              dropType = DTYPE_UNFORCED;           // ? not sure, Yun
+            }
         }
-      NS_LOG_DEBUG ("\t Marking In pkt due to Hard Mark " << m_qAvgIn);
-      m_stats.forcedMark++;
-    
+      else
+        {
+          m_vProbIn = 0.0;
+          m_oldIn = 0;                      // explain
+        }
+      if (qLen >= m_queueLimit)
+        {
+          // see if we've exceeded the queue size
+          dropType = DTYPE_FORCED;           //need more consideration, Yun
+        }
+
+      if (dropType == DTYPE_UNFORCED)       //how does ecn work?
+        {
+          if (!m_useEcn || !item->Mark ())
+            {
+              NS_LOG_DEBUG ("\t Dropping In pkt due to Prob Mark " << m_qAvgIn);
+              m_stats.unforcedDrop++;
+              --inlen;
+              inbcount -= item->GetSize ();
+              Drop (item);
+
+              return false;
+            }
+          NS_LOG_DEBUG ("\t Marking In pkt due to Prob Mark " << m_qAvgIn); // where are we marking?
+          m_stats.unforcedMark++;
+
+        }
+
+      else if (dropType == DTYPE_FORCED)
+        {
+          if (m_useHardDrop || !m_useEcn || !item->Mark ())
+            {
+              NS_LOG_DEBUG ("\t Dropping In pkt due to Hard Mark " << m_qAvgIn);
+              m_stats.forcedDrop++;
+              --inlen;
+              inbcount -= item->GetSize ();
+              Drop (item);
+              if (m_isNs1Compat)
+                {
+                  m_count = 0;
+                  m_countBytes = 0;
+                  m_countIn = 0;      //added by me, review it
+                  m_countBytesIn = 0;      //added by me,review it
+                }
+              return false;
+            }
+          NS_LOG_DEBUG ("\t Marking In pkt due to Hard Mark " << m_qAvgIn);
+          m_stats.forcedMark++;
+
+        }
+      bool retval = GetInternalQueue (0)->Enqueue (item);
+      ++inlen;
+      inbcount += item->GetSize ();
+      if (!retval)
+        {
+          m_stats.qLimDrop++;
+        }
+
+      // If Queue::Enqueue fails, QueueDisc::Drop is called by the internal queue
+      // because QueueDisc::AddInternalQueue sets the drop callback
+
+      NS_LOG_LOGIC ("Number packets " << GetInternalQueue (0)->GetNPackets ());
+      NS_LOG_LOGIC ("Number bytes " << GetInternalQueue (0)->GetNBytes ());
+
+      return retval;
     }
-	bool retval = GetInternalQueue (0)->Enqueue (item);
-    ++inlen;
-			inbcount += item->GetSize();
-  if (!retval)
+  else
     {
-      m_stats.qLimDrop++;
-    }
-
-  // If Queue::Enqueue fails, QueueDisc::Drop is called by the internal queue
-  // because QueueDisc::AddInternalQueue sets the drop callback
-
-  NS_LOG_LOGIC ("Number packets " << GetInternalQueue (0)->GetNPackets ());
-  NS_LOG_LOGIC ("Number bytes " << GetInternalQueue (0)->GetNBytes ());
-
-  return retval;
-	}
-	else{
-	//out pkts
+      //out pkts
 /* Out packets and default regular packets */
-          /*
-           * count and count_bytes keeps a tally of arriving traffic
-           * that has not been dropped (i.e. how long, in terms of traffic,
-           * it has been since the last early drop)
-           */
-	
-          ++m_count;
-          m_countBytes += item->GetSize();
+      /*
+       * count and count_bytes keeps a tally of arriving traffic
+       * that has not been dropped (i.e. how long, in terms of traffic,
+       * it has been since the last early drop)
+       */
 
-          /* added by Yun */
-          ++m_countOut;
-          m_countBytesOut += item->GetSize();
+      ++m_count;
+      m_countBytes += item->GetSize ();
 
-		  /*
-           * DROP LOGIC:
-           *    q = current q size, ~q = averaged q size
-           *    1> if ~q > maxthresh, this is a FORCED drop
-           *    2> if minthresh < ~q < maxthresh, this may be an UNFORCED drop
-           *    3> if (q+1) > hard q limit, this is a FORCED drop
-           */
+      /* added by Yun */
+      ++m_countOut;
+      m_countBytesOut += item->GetSize ();
 
-                /* if the average queue is below the out_th_min
-                 * then we have no need to worry.
-                 */
+      /*
+* DROP LOGIC:
+*    q = current q size, ~q = averaged q size
+*    1> if ~q > maxthresh, this is a FORCED drop
+*    2> if minthresh < ~q < maxthresh, this may be an UNFORCED drop
+*    3> if (q+1) > hard q limit, this is a FORCED drop
+*/
 
-          
-          // register double in_qavg = edv_in_.v_ave;
-          int dropType = DTYPE_NONE;
-          //int qlen = qib_ ? q_->byteLength() : q_->length();
-          /* added by Yun, seems not useful */
-          // int out_qlen = qib_ ? out_bcount_ : q_->out_length();
+      /* if the average queue is below the out_th_min
+       * then we have no need to worry.
+       */
 
-          //int qlim = qib_ ?  (qlim_ * edp_.mean_pktsize) : qlim_;
 
-          //curq_ = qlen; // helps to trace queue during arrival, if enabled
+      // register double in_qavg = edv_in_.v_ave;
+      int dropType = DTYPE_NONE;
+      //int qlen = qib_ ? q_->byteLength() : q_->length();
+      /* added by Yun, seems not useful */
+      // int out_qlen = qib_ ? out_bcount_ : q_->out_length();
 
-          if (m_qAvg >= m_minThOut && qLen > 1) {
-                  if ((!m_isGentleOut && m_qAvg >= m_maxThOut) ||
-		      (m_isGentleOut && m_qAvg >= 2 * m_maxThOut)) {
-                        dropType = DTYPE_FORCED;  // ? not sure, Yun
-                  } else if (m_oldOut == 0) {
+      //int qlim = qib_ ?  (qlim_ * edp_.mean_pktsize) : qlim_;
 
-			/* 
-			 * The average queue size has just crossed the
-			 * threshold from below to above "minthresh", or
-			 * from above "minthresh" with an empty queue to
-			 * above "minthresh" with a nonempty queue.
-			 */
-                        m_countOut = 1;
-                        m_countBytesOut = item->GetSize();
-                        m_oldOut = 1;
-                  } else if (DropOutEarly(item,qLen)) {
-                        dropType = DTYPE_UNFORCED; // ? not sure, Yun
-                  }
-          } else {
-                  m_vProbOut = 0.0;
-                  m_oldOut = 0;              // explain
-          }
-          if (qLen >= m_queueLimit) {
-                  // see if we've exceeded the queue size
-                  dropType = DTYPE_FORCED;   //need more consideration, Yun
-          }
-		
-          if (dropType == DTYPE_UNFORCED) { 
-                  if (!m_useEcn || !item->Mark ())
+      //curq_ = qlen; // helps to trace queue during arrival, if enabled
+
+      if (m_qAvg >= m_minThOut && qLen > 1)
         {
-          NS_LOG_DEBUG ("\t Dropping Out pkt due to Prob Mark " << m_qAvg);
-          m_stats.unforcedDrop++;
-          Drop (item);
-          return false;
-        }
-      NS_LOG_DEBUG ("\t Marking Out pkt due to Prob Mark " << m_qAvg);
-      m_stats.unforcedMark++;
-                          
-                   
-                  }
-                 
-           else if (dropType == DTYPE_FORCED)
-    {
-      if (m_useHardDrop || !m_useEcn || !item->Mark ())
-        {
-          NS_LOG_DEBUG ("\t Dropping Out pkt due to Hard Mark " << m_qAvg);
-          m_stats.forcedDrop++;
-          Drop (item);
-          if (m_isNs1Compat)
+          if ((!m_isGentleOut && m_qAvg >= m_maxThOut)
+              || (m_isGentleOut && m_qAvg >= 2 * m_maxThOut))
             {
-			  m_countOut=0;//added by me, review it
-			  m_countBytesOut=0;//added by me,review it
+              dropType = DTYPE_FORCED;            // ? not sure, Yun
             }
-          return false;
+          else if (m_oldOut == 0)
+            {
+
+              /*
+               * The average queue size has just crossed the
+               * threshold from below to above "minthresh", or
+               * from above "minthresh" with an empty queue to
+               * above "minthresh" with a nonempty queue.
+               */
+              m_countOut = 1;
+              m_countBytesOut = item->GetSize ();
+              m_oldOut = 1;
+            }
+          else if (DropOutEarly (item,qLen))
+            {
+              dropType = DTYPE_UNFORCED;           // ? not sure, Yun
+            }
         }
-      NS_LOG_DEBUG ("\t Marking Out pkt due to Hard Mark " << m_qAvg);
-      m_stats.forcedMark++;
+      else
+        {
+          m_vProbOut = 0.0;
+          m_oldOut = 0;                      // explain
+        }
+      if (qLen >= m_queueLimit)
+        {
+          // see if we've exceeded the queue size
+          dropType = DTYPE_FORCED;           //need more consideration, Yun
+        }
+
+      if (dropType == DTYPE_UNFORCED)
+        {
+          if (!m_useEcn || !item->Mark ())
+            {
+              NS_LOG_DEBUG ("\t Dropping Out pkt due to Prob Mark " << m_qAvg);
+              m_stats.unforcedDrop++;
+              Drop (item);
+              return false;
+            }
+          NS_LOG_DEBUG ("\t Marking Out pkt due to Prob Mark " << m_qAvg);
+          m_stats.unforcedMark++;
+
+
+        }
+
+      else if (dropType == DTYPE_FORCED)
+        {
+          if (m_useHardDrop || !m_useEcn || !item->Mark ())
+            {
+              NS_LOG_DEBUG ("\t Dropping Out pkt due to Hard Mark " << m_qAvg);
+              m_stats.forcedDrop++;
+              Drop (item);
+              if (m_isNs1Compat)
+                {
+                  m_countOut = 0;      //added by me, review it
+                  m_countBytesOut = 0;      //added by me,review it
+                }
+              return false;
+            }
+          NS_LOG_DEBUG ("\t Marking Out pkt due to Hard Mark " << m_qAvg);
+          m_stats.forcedMark++;
+        }
+      bool retval = GetInternalQueue (0)->Enqueue (item);
+
+      if (!retval)
+        {
+          m_stats.qLimDrop++;
+        }
+
+      // If Queue::Enqueue fails, QueueDisc::Drop is called by the internal queue
+      // because QueueDisc::AddInternalQueue sets the drop callback
+
+      NS_LOG_LOGIC ("Number packets " << GetInternalQueue (0)->GetNPackets ());
+      NS_LOG_LOGIC ("Number bytes " << GetInternalQueue (0)->GetNBytes ());
+
+      return retval;
+
     }
-	bool retval = GetInternalQueue (0)->Enqueue (item);
 
-  if (!retval)
-    {
-      m_stats.qLimDrop++;
-    }
-
-  // If Queue::Enqueue fails, QueueDisc::Drop is called by the internal queue
-  // because QueueDisc::AddInternalQueue sets the drop callback
-
-  NS_LOG_LOGIC ("Number packets " << GetInternalQueue (0)->GetNPackets ());
-  NS_LOG_LOGIC ("Number bytes " << GetInternalQueue (0)->GetNBytes ());
-
-  return retval;
-
-	}
-	
 }
 
 
 // Returns a probability using these function parameters for the DropEarly funtion
 double
 RioQueueDisc::CalculatePNew (double qAvg, double maxTh, bool isGentle, double vA,
-                         double vB, double vC, double vD, double maxP)
+                             double vB, double vC, double vD, double maxP)
 {
   NS_LOG_FUNCTION (this << qAvg << maxTh << isGentle << vA << vB << vC << vD << maxP);
   double p;
@@ -597,7 +635,7 @@ RioQueueDisc::CalculatePNew (double qAvg, double maxTh, bool isGentle, double vA
     }
   else if (!isGentle && qAvg >= maxTh)
     {
-      /* 
+      /*
        * OLD: p continues to range linearly above max_p as
        * the average queue size ranges above th_max.
        * NEW: p is set to 1.0
@@ -622,9 +660,9 @@ RioQueueDisc::CalculatePNew (double qAvg, double maxTh, bool isGentle, double vA
   return p;
 }
 // Returns a probability using these function parameters for the DropEarly funtion
-double 
+double
 RioQueueDisc::ModifyP (double p, uint32_t count, uint32_t countBytes,
-                   uint32_t meanPktSize, bool isWait, uint32_t size)
+                       uint32_t meanPktSize, bool isWait, uint32_t size)
 {
   NS_LOG_FUNCTION (this << p << count << countBytes << meanPktSize << isWait << size);
   double count1 = (double) count;
@@ -680,21 +718,22 @@ RioQueueDisc::ModifyP (double p, uint32_t count, uint32_t countBytes,
  * should the packet be dropped/marked due to a probabilistic drop?
  */
 uint32_t
-RioQueueDisc::DropInEarly(Ptr<QueueDiscItem> item, uint32_t qSize)
+RioQueueDisc::DropInEarly (Ptr<QueueDiscItem> item, uint32_t qSize)
 {
-		NS_LOG_FUNCTION (this << item << qSize);
+  NS_LOG_FUNCTION (this << item << qSize);
 
-        m_vProb1In = CalculatePNew(m_qAvgIn, m_maxThIn, 
-	  m_isGentleIn, m_vAIn, m_vBIn, m_vCIn, 
-	  m_vDIn, m_curMaxPIn);
-        m_vProbIn = ModifyP (m_vProb1In, m_countIn, 
-	  m_countBytesIn, m_meanPktSize, m_isWait, 
-	  item->GetSize ());
+  m_vProb1In = CalculatePNew (m_qAvgIn, m_maxThIn,
+                              m_isGentleIn, m_vAIn, m_vBIn, m_vCIn,
+                              m_vDIn, m_curMaxPIn);
+  m_vProbIn = ModifyP (m_vProb1In, m_countIn,
+                       m_countBytesIn, m_meanPktSize, m_isWait,
+                       item->GetSize ());
 
-	// drop probability is computed, pick random number and act
-	double u = m_uv->GetValue ();
-	if (u <= m_vProbIn) {
-		NS_LOG_LOGIC ("u <= m_vProbIn; u " << u << "; m_vProbIn " << m_vProbIn);
+  // drop probability is computed, pick random number and act
+  double u = m_uv->GetValue ();
+  if (u <= m_vProbIn)
+    {
+      NS_LOG_LOGIC ("u <= m_vProbIn; u " << u << "; m_vProbIn " << m_vProbIn);
 
       // DROP or MARK
       m_countIn = 0;
@@ -702,28 +741,29 @@ RioQueueDisc::DropInEarly(Ptr<QueueDiscItem> item, uint32_t qSize)
       /// \todo Implement set bit to mark
 
       return 1; // drop
-	}
-	return (0);			// no DROP/mark
+    }
+  return (0);                           // no DROP/mark
 }
 
 
 uint32_t
-RioQueueDisc::DropOutEarly(Ptr<QueueDiscItem> item, uint32_t qSize)
+RioQueueDisc::DropOutEarly (Ptr<QueueDiscItem> item, uint32_t qSize)
 {
-		NS_LOG_FUNCTION (this << item << qSize);
+  NS_LOG_FUNCTION (this << item << qSize);
 
-        m_vProb1Out = CalculatePNew(m_qAvg, m_maxThOut, 
-	  m_isGentleOut, m_vAOut, m_vBOut, m_vCOut, 
-	  m_vDOut, m_curMaxPOut);
-        m_vProbOut = ModifyP (m_vProb1Out, m_countOut, 
-	  m_countBytesOut, m_meanPktSize, m_isWait, 
-	  item->GetSize ());
+  m_vProb1Out = CalculatePNew (m_qAvg, m_maxThOut,
+                               m_isGentleOut, m_vAOut, m_vBOut, m_vCOut,
+                               m_vDOut, m_curMaxPOut);
+  m_vProbOut = ModifyP (m_vProb1Out, m_countOut,
+                        m_countBytesOut, m_meanPktSize, m_isWait,
+                        item->GetSize ());
 
 
-        // drop probability is computed, pick random number and act
-        double u = m_uv->GetValue ();
-        if (u <= m_vProbOut) {
-           	NS_LOG_LOGIC ("u <= m_vProbOut; u " << u << "; m_vProbOut " << m_vProbOut);
+  // drop probability is computed, pick random number and act
+  double u = m_uv->GetValue ();
+  if (u <= m_vProbOut)
+    {
+      NS_LOG_LOGIC ("u <= m_vProbOut; u " << u << "; m_vProbOut " << m_vProbOut);
 
       // DROP or MARK
       m_countOut = 0;
@@ -731,11 +771,13 @@ RioQueueDisc::DropOutEarly(Ptr<QueueDiscItem> item, uint32_t qSize)
       /// \todo Implement set bit to mark
 
       return 1; // drop
-             	} else {
-             		return (1);
-             	}
-        
-        return (0);  // no DROP/mark
+    }
+  else
+    {
+      return (1);
+    }
+
+  return (0);        // no DROP/mark
 }
 
 
@@ -795,15 +837,15 @@ RioQueueDisc::CheckConfig (void)
       return false;
     }
 
-  if ((GetInternalQueue (0)->GetMode () == QueueBase::QUEUE_MODE_PACKETS && m_mode == QUEUE_DISC_MODE_BYTES) ||
-      (GetInternalQueue (0)->GetMode () == QueueBase::QUEUE_MODE_BYTES && m_mode == QUEUE_DISC_MODE_PACKETS))
+  if ((GetInternalQueue (0)->GetMode () == QueueBase::QUEUE_MODE_PACKETS && m_mode == QUEUE_DISC_MODE_BYTES)
+      || (GetInternalQueue (0)->GetMode () == QueueBase::QUEUE_MODE_BYTES && m_mode == QUEUE_DISC_MODE_PACKETS))
     {
       NS_LOG_ERROR ("The mode of the provided queue does not match the mode set on the RioQueueDisc");
       return false;
     }
 
-  if ((m_mode ==  QUEUE_DISC_MODE_PACKETS && GetInternalQueue (0)->GetMaxPackets () < m_queueLimit) ||
-      (m_mode ==  QUEUE_DISC_MODE_BYTES && GetInternalQueue (0)->GetMaxBytes () < m_queueLimit))
+  if ((m_mode ==  QUEUE_DISC_MODE_PACKETS && GetInternalQueue (0)->GetMaxPackets () < m_queueLimit)
+      || (m_mode ==  QUEUE_DISC_MODE_BYTES && GetInternalQueue (0)->GetMaxBytes () < m_queueLimit))
     {
       NS_LOG_ERROR ("The size of the internal queue is less than the queue disc limit");
       return false;
@@ -819,24 +861,24 @@ RioQueueDisc::InitializeParams (void)
   NS_LOG_INFO ("Initializing RIO params.");
 
   m_ptc = m_linkBandwidth.GetBitRate () / (8.0 * m_meanPktSize);
-  
+
   if (m_minThIn == 0 && m_maxThIn == 0)
     {
       m_minThIn = 15.0;
-      
+
       if (GetMode () == QUEUE_DISC_MODE_BYTES)
         {
           m_minThIn = m_minThIn * m_meanPktSize;
         }
 
-      // default values taken from ns2 
+      // default values taken from ns2
       m_maxThIn = 30.0;
     }
 
-   if (m_minThOut == 0 && m_maxThOut == 0)
+  if (m_minThOut == 0 && m_maxThOut == 0)
     {
       m_minThOut = 5.0;
-      
+
       if (GetMode () == QUEUE_DISC_MODE_BYTES)
         {
           m_minThOut = m_minThOut * m_meanPktSize;
@@ -864,15 +906,15 @@ RioQueueDisc::InitializeParams (void)
   m_idle = 1;
   m_idleIn = 1;
 
-  inlen=0;
-  inbcount=0;
+  inlen = 0;
+  inbcount = 0;
 
-  m_priorityMethod=1;
+  m_priorityMethod = 1;
 
   double th_diffIn = (m_maxThIn - m_minThIn);
   if (th_diffIn == 0)
     {
-      th_diffIn = 1.0; 
+      th_diffIn = 1.0;
     }
   m_vAIn = 1.0 / th_diffIn;
   m_curMaxPIn = 1.0 / m_lIntermIn;
@@ -884,10 +926,10 @@ RioQueueDisc::InitializeParams (void)
       m_vDIn = 2.0 * m_curMaxPIn - 1.0;
     }
 
-     double th_diffOut = (m_maxThOut - m_minThOut);
+  double th_diffOut = (m_maxThOut - m_minThOut);
   if (th_diffOut == 0)
     {
-      th_diffOut = 1.0; 
+      th_diffOut = 1.0;
     }
   m_vAOut = 1.0 / th_diffOut;
   m_curMaxPOut = 1.0 / m_lIntermOut;
@@ -904,13 +946,13 @@ RioQueueDisc::InitializeParams (void)
 /*
  * If m_qW=0, set it to a reasonable value of 1-exp(-1/C)
  * This corresponds to choosing m_qW to be of that value for
- * which the packet time constant -1/ln(1-m)qW) per default RTT 
+ * which the packet time constant -1/ln(1-m)qW) per default RTT
  * of 100ms is an order of magnitude more than the link capacity, C.
  *
  * If m_qW=-1, then the queue weight is set to be a function of
- * the bandwidth and the link propagation delay.  In particular, 
- * the default RTT is assumed to be three times the link delay and 
- * transmission delay, if this gives a default RTT greater than 100 ms. 
+ * the bandwidth and the link propagation delay.  In particular,
+ * the default RTT is assumed to be three times the link delay and
+ * transmission delay, if this gives a default RTT greater than 100 ms.
  *
  * If m_qW=-2, set it to a reasonable value of 1-exp(-10/C).
  */
@@ -933,14 +975,14 @@ RioQueueDisc::InitializeParams (void)
       m_qW = 1.0 - std::exp (-10.0 / m_ptc);
     }
 
-  NS_LOG_DEBUG ("\tm_delay " << m_linkDelay.GetSeconds () << "; m_isWait " 
+  NS_LOG_DEBUG ("\tm_delay " << m_linkDelay.GetSeconds () << "; m_isWait "
                              << m_isWait << "; m_qW " << m_qW << "; m_ptc " << m_ptc
                              << "; m_minThIn " << m_minThIn << "; m_maxThIn " << m_maxThIn
                              << "; m_minThOut " << m_minThOut << "; m_maxThOut " << m_maxThOut
-                             << "; m_isGentleIn " << m_isGentleIn << "; m_isGentleOut " << m_isGentleOut 
-                             <<"; th_diffIn " << th_diffIn <<"; th_diffOut " << th_diffOut
+                             << "; m_isGentleIn " << m_isGentleIn << "; m_isGentleOut " << m_isGentleOut
+                             << "; th_diffIn " << th_diffIn << "; th_diffOut " << th_diffOut
                              << "; lIntermIn " << m_lIntermIn << "; lIntermOut " << m_lIntermOut
-                             << "; vaIn " << m_vAIn << "; vaOut " << m_vAOut 
+                             << "; vaIn " << m_vAIn << "; vaOut " << m_vAOut
                              <<  "; cur_max_pIn " << m_curMaxPIn <<  "; cur_max_pOut " << m_curMaxPOut
                              << "; v_bIn " << m_vBIn << "; v_bOut " << m_vBOut
                              <<  "; m_vCIn " << m_vCIn <<  "; m_vCOut " << m_vCOut
