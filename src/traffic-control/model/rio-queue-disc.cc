@@ -209,14 +209,14 @@ RioQueueDisc::DoDequeue (void)
   if (GetInternalQueue (0)->IsEmpty ())
     {
       NS_LOG_LOGIC ("Queue empty");
-      m_idle = 1;
+      m_idle = true;
       m_idleTime = Simulator::Now ();
 
       p=0;
     }
   else
     {
-      m_idle = 0;
+      m_idle = false;
       Ptr<QueueDiscItem> item = GetInternalQueue (0)->Dequeue ();
 
       NS_LOG_LOGIC ("Popped " << item);
@@ -234,14 +234,14 @@ RioQueueDisc::DoDequeue (void)
       if (m_flow)
         {
           /* Regular In packets */
-          m_idleIn = 0;
+          m_idleIn = false;
           inbcount -= p->GetSize ();
           --inlen;
         }
     }
   else
     {
-      m_idleIn = 1;
+      m_idleIn = true;
     }
   return (p);
 }
@@ -327,7 +327,7 @@ bool RioQueueDisc::DoEnqueue (Ptr<QueueDiscItem> item)
   Time now = Simulator::Now ();
   if (m_idle)
     {
-      m_idle = 0;
+      m_idle = false;
       m = uint32_t (m_ptc * (now - m_idleTime).GetSeconds ());
     }
   m_qAvg = Estimator (qLen,m + 1,m_qAvg, m_qW);
@@ -347,7 +347,7 @@ bool RioQueueDisc::DoEnqueue (Ptr<QueueDiscItem> item)
       /* To account for the period when the queue was empty.  */
       if (m_idleIn)
         {
-          m_idleIn = 0;
+          m_idleIn = false;
           m_in = uint32_t (m_ptc * (now - m_idleTime).GetSeconds ());
         }
 
@@ -895,8 +895,8 @@ RioQueueDisc::InitializeParams (void)
   m_countBytesIn = 0;
   m_oldOut = 0;
   m_oldIn = 0;
-  m_idle = 1;
-  m_idleIn = 1;
+  m_idle = true;
+  m_idleIn = true;
 
   inlen = 0;
   inbcount = 0;

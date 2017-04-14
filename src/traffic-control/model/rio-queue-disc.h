@@ -229,7 +229,7 @@ private:
   double m_vProbOut;           //!< Prob. of packet drop
   uint32_t m_countBytesOut;    //!< Number of bytes since last drop
   uint32_t m_oldOut;           //!< 0 when average queue first exceeds threshold
-  uint32_t m_idle;          //!< 0/1 idle status
+  bool m_idle;          //!< 0/1 idle status
   double m_vProb1In;          //!< Prob. of packet drop before "count"
   double m_vAIn;              //!< 1.0 / (m_maxTh - m_minTh)
   double m_vBIn;              //!< -m_minTh / (m_maxTh - m_minTh)
@@ -239,7 +239,7 @@ private:
   uint32_t m_countBytesIn;    //!< Number of bytes since last drop
   uint32_t m_countBytes;    //!< Number of bytes since last drop
   uint32_t m_oldIn;           //!< 0 when average queue first exceeds threshold
-  uint32_t m_idleIn;          //!< 0/1 idle status
+  bool m_idleIn;          //!< 0/1 idle status
   double m_ptc;             //!< packet time constant in packets/second
   double m_qAvg;            //!< Average queue length
   double m_qAvgIn;            //!< Average queue length
