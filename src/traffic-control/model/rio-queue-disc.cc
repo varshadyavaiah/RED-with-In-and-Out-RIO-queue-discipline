@@ -203,8 +203,7 @@ RioQueueDisc::AssignStreams (int64_t stream)
   return 1;
 }
 
-
-
+// The function returns true if in, else reutrns false
 bool RioQueueDisc::In_or_Out(Ptr<QueueDiscItem> item )
 {
 
@@ -217,27 +216,6 @@ bool RioQueueDisc::In_or_Out(Ptr<QueueDiscItem> item )
  	   flow_map[flowid]=temp;
  	}
  	
- 	
- 	
- 	/*
- 	//Ptr<FlowMonitor> object;
- 	FlowMonitorHelper flowmon;
- 	Ptr<FlowMonitor> object = flowmon.InstallAll ();
-        //FlowMonitor::FlowStats &flowstats=object->GetFlowStats();
-        //object->CheckForLostPackets ();
-  	std::map<FlowId, FlowMonitor::FlowStats> stats = object->GetFlowStats ();
-	for (std::map<FlowId, FlowMonitor:>::const_iterator i=stats.begin(); 
-        i!=stats.end(); ++i)
-	  {   
-	    std::cout << "  Tx Bytes:   " << i->second.txBytes << "\n";
-	    std::cout << "  Rx Bytes:   " << i->second.rxBytes << "\n";
-	    std::cout << "  Tx Packets: " << i->second.txPackets << "\n";
-	    std::cout << "  Rx Packets: " << i->second.rxPackets << "\n";
-	    std::cout << "  Lost Packets: " << i->second.lostPackets << "\n";
-	    std::cout << "  Pkt Lost Ratio: " << ((double)i->second.txPackets-(double)i->second.rxPackets)/(double)i->second.txPackets << "\n";
-		}  
-	*/
-	
 	
 	Time now=Simulator::Now();
 	

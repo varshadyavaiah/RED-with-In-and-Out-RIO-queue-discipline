@@ -50,6 +50,7 @@ public:
 
   /* map between flow id and respective flow info*/
   std::map<uint32_t,flow_info> flow_map;
+ 
   /**
    * \brief Stats
    */
@@ -62,8 +63,9 @@ public:
     uint32_t forcedMark;                //!< Forced marks, qavg > max threshold
   } Stats;
 
-  /* tells whether pkt is In or Out*/
+  /* tells whether pkt is In or Out. Takes the packet as input.*/
   bool In_or_Out(Ptr<QueueDiscItem> item );
+  
   
   /**
    * \brief Drop types
