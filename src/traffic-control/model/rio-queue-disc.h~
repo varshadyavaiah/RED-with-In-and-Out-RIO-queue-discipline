@@ -259,9 +259,6 @@ private:
   uint32_t inlen;	/* In Packets count */
   uint32_t inbcount;	/* In packets byte count */
   
-  uint32_t nQueuedIn; // Has the in queue length
-  uint32_t nQueued; // Has the queue length
-  
   uint32_t m_priorityMethod;	/* 0 to leave priority field in header, */
 				/*  1 to use flowid as priority.  */
 

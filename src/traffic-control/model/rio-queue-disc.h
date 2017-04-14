@@ -99,20 +99,15 @@ public:
    */
   void SetQueueLimit (uint32_t lim);
 
+/**Set priority method 0 to leave priority field in header, 1 to use flowid as priority. **/
+  void SetPriorityMethod (uint32_t pri);
   /**
-   * \brief Set the thresh limits of In RED queue.
+   * \brief Set the thresh limits of In and Out RED queue.
    *
    * \param minTh Minimum thresh in bytes or packets.
    * \param maxTh Maximum thresh in bytes or packets.
    */
   void SetTh (double minThIn, double maxThIn,double outMinTh, double outMaxTh);
-
-   /**
-   * \brief Set the thresh limits of Out RED queue.
-   *
-   * \param minTh Minimum thresh in bytes or packets.
-   * \param maxTh Maximum thresh in bytes or packets.
-   */
 
   /**
    * \brief Get the RIO statistics after running.

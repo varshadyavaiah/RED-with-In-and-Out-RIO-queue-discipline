@@ -317,6 +317,15 @@ bool RioQueueDisc::DoEnqueue (Ptr<QueueDiscItem> item)
         qLenIn=inlen;
 	}
     /*Add ns3 equivalent */
+
+	uint32_t m = 0;
+    Time now = Simulator::Now ();
+	if (m_idle) {
+                m_idle = 0;
+                m = uint32_t(m_ptc * (now - m_idleTime).GetSeconds ());
+        }
+    m_qAvg = Estimator (qLen,m+1,m_qAvg, m_qW);
+
     if (m_flow) {  /* Regular In packets */
 
 	/*
@@ -325,18 +334,15 @@ bool RioQueueDisc::DoEnqueue (Ptr<QueueDiscItem> item)
 	 * of time we've been idle for
 	 */
 
-	uint32_t m = 0;
+	
 	uint32_t m_in = 0;
-	Time now = Simulator::Now ();
+	
         /* To account for the period when the queue was empty.  */
 	if (m_idleIn) {
 		m_idleIn = 0;
 		m_in = uint32_t(m_ptc * (now - m_idleTime).GetSeconds ());
 	} 
-	if (m_idle) {
-                m_idle = 0;
-                m = uint32_t(m_ptc * (now - m_idleTime).GetSeconds ());
-        }
+	
 
 	/*
 	 * Run the estimator with either 1 new packet arrival, or with
@@ -346,7 +352,7 @@ bool RioQueueDisc::DoEnqueue (Ptr<QueueDiscItem> item)
         // printf( "qlen %d\n", q_->length());
 
        
-	m_qAvg = Estimator (qLen,m+1,m_qAvg, m_qW);
+	
 	m_qAvgIn = Estimator (qLenIn,m_in+1,m_qAvgIn, m_qW); 
 
 	/*
@@ -404,10 +410,10 @@ bool RioQueueDisc::DoEnqueue (Ptr<QueueDiscItem> item)
                   dropType = DTYPE_FORCED;   //need more consideration, Yun
           }
 
-          if (dropType == DTYPE_UNFORCED) { //why aren't they reducing nqueued? copied from red code
+          if (dropType == DTYPE_UNFORCED) { //how does ecn work?
                   if (!m_useEcn || !item->Mark ())
         {
-          NS_LOG_DEBUG ("\t Dropping due to Prob Mark " << m_qAvg);
+          NS_LOG_DEBUG ("\t Dropping In pkt due to Prob Mark " << m_qAvgIn);
           m_stats.unforcedDrop++;
           --inlen;
 			inbcount -= item->GetSize();
@@ -415,7 +421,7 @@ bool RioQueueDisc::DoEnqueue (Ptr<QueueDiscItem> item)
           
           return false;
         }
-      NS_LOG_DEBUG ("\t Marking due to Prob Mark " << m_qAvg);
+      NS_LOG_DEBUG ("\t Marking In pkt due to Prob Mark " << m_qAvgIn); // where are we marking? 
       m_stats.unforcedMark++;   
                    
                   }
@@ -424,7 +430,7 @@ bool RioQueueDisc::DoEnqueue (Ptr<QueueDiscItem> item)
     {
       if (m_useHardDrop || !m_useEcn || !item->Mark ())
         {
-          NS_LOG_DEBUG ("\t Dropping due to Hard Mark " << m_qAvg);
+          NS_LOG_DEBUG ("\t Dropping In pkt due to Hard Mark " << m_qAvgIn);
           m_stats.forcedDrop++;
           --inlen;
 			inbcount -= item->GetSize();
@@ -438,7 +444,7 @@ bool RioQueueDisc::DoEnqueue (Ptr<QueueDiscItem> item)
             }
           return false;
         }
-      NS_LOG_DEBUG ("\t Marking due to Hard Mark " << m_qAvg);
+      NS_LOG_DEBUG ("\t Marking In pkt due to Hard Mark " << m_qAvgIn);
       m_stats.forcedMark++;
     
     }
@@ -524,15 +530,15 @@ bool RioQueueDisc::DoEnqueue (Ptr<QueueDiscItem> item)
                   dropType = DTYPE_FORCED;   //need more consideration, Yun
           }
 		
-          if (dropType == DTYPE_UNFORCED) { //why aren't they reducing nqueued? copied from red code
+          if (dropType == DTYPE_UNFORCED) { 
                   if (!m_useEcn || !item->Mark ())
         {
-          NS_LOG_DEBUG ("\t Dropping due to Prob Mark " << m_qAvg);
+          NS_LOG_DEBUG ("\t Dropping Out pkt due to Prob Mark " << m_qAvg);
           m_stats.unforcedDrop++;
           Drop (item);
           return false;
         }
-      NS_LOG_DEBUG ("\t Marking due to Prob Mark " << m_qAvg);
+      NS_LOG_DEBUG ("\t Marking Out pkt due to Prob Mark " << m_qAvg);
       m_stats.unforcedMark++;
                           
                    
@@ -542,7 +548,7 @@ bool RioQueueDisc::DoEnqueue (Ptr<QueueDiscItem> item)
     {
       if (m_useHardDrop || !m_useEcn || !item->Mark ())
         {
-          NS_LOG_DEBUG ("\t Dropping due to Hard Mark " << m_qAvg);
+          NS_LOG_DEBUG ("\t Dropping Out pkt due to Hard Mark " << m_qAvg);
           m_stats.forcedDrop++;
           Drop (item);
           if (m_isNs1Compat)
@@ -552,7 +558,7 @@ bool RioQueueDisc::DoEnqueue (Ptr<QueueDiscItem> item)
             }
           return false;
         }
-      NS_LOG_DEBUG ("\t Marking due to Hard Mark " << m_qAvg);
+      NS_LOG_DEBUG ("\t Marking Out pkt due to Hard Mark " << m_qAvg);
       m_stats.forcedMark++;
     }
 	bool retval = GetInternalQueue (0)->Enqueue (item);
@@ -823,7 +829,7 @@ RioQueueDisc::InitializeParams (void)
           m_minThIn = m_minThIn * m_meanPktSize;
         }
 
-      // set m_maxTh to three times m_minTh [Ref: http://www.icir.org/floyd/papers/adaptiveRed.pdf]
+      // default values taken from ns2 
       m_maxThIn = 30.0;
     }
 
@@ -836,7 +842,7 @@ RioQueueDisc::InitializeParams (void)
           m_minThOut = m_minThOut * m_meanPktSize;
         }
 
-      // set m_maxTh to three times m_minTh [Ref: http://www.icir.org/floyd/papers/adaptiveRed.pdf]
+      // why don't they do * m_meanpktsize?
       m_maxThOut = 15.0;
     }
   NS_ASSERT (m_minThIn <= m_maxThIn);

@@ -117,8 +117,8 @@ TypeId RioQueueDisc::GetTypeId (void)
                    MakeBooleanChecker ())
     .AddAttribute ("PriorityMethod",
                    "0 to leave priority field in header, 1 to use flowid as priority.",
-                   UintegerValue (25),
-                   MakeUintegerAccessor (&RioQueueDisc::SetQueueLimit),
+                   UintegerValue (1),
+                   MakeUintegerAccessor (&RioQueueDisc::SetPriorityMethod),
                    MakeUintegerChecker<uint32_t> ())
   ;
 
@@ -164,6 +164,13 @@ RioQueueDisc::SetQueueLimit (uint32_t lim)
 {
   NS_LOG_FUNCTION (this << lim);
   m_queueLimit = lim;
+}
+
+void
+RioQueueDisc::SetPriorityMethod (uint32_t pri)
+{
+  NS_LOG_FUNCTION (this << pri);
+  m_priorityMethod = pri;
 }
 
 void
