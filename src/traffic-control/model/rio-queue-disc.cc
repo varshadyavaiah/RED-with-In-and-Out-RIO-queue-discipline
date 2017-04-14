@@ -30,11 +30,6 @@ TypeId RioQueueDisc::GetTypeId (void)
                    UintegerValue (500),
                    MakeUintegerAccessor (&RioQueueDisc::m_meanPktSize),
                    MakeUintegerChecker<uint32_t> ())
-    .AddAttribute ("IdlePktSize",
-                   "Average packet size used during idle times. Used when m_cautions = 3",
-                   UintegerValue (0),
-                   MakeUintegerAccessor (&RioQueueDisc::m_idlePktSize),
-                   MakeUintegerChecker<uint32_t> ())
     .AddAttribute ("Wait",
                    "True for waiting between dropped packets",
                    BooleanValue (true),
@@ -236,7 +231,6 @@ RioQueueDisc::DoDequeue (void)
     {
      
       m_flow = Classify(p);
-
       if (m_flow)
         {
           /* Regular In packets */
@@ -894,6 +888,7 @@ RioQueueDisc::InitializeParams (void)
 
   m_qAvg = 0.0;
   m_qAvgIn = 0.0;
+  m_count=0;
   m_countOut = 0;
   m_countIn = 0;
   m_countBytesOut = 0;

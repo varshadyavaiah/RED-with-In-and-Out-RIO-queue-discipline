@@ -125,6 +125,7 @@ protected:
 
 private:
   virtual bool DoEnqueue (Ptr<QueueDiscItem> item);
+
   virtual Ptr<QueueDiscItem> DoDequeue (void);
   virtual Ptr<const QueueDiscItem> DoPeek (void) const;
   virtual bool CheckConfig (void);
@@ -198,7 +199,6 @@ private:
   // ** Variables supplied by user
   QueueDiscMode m_mode;     //!< Mode (Bytes or packets)
   uint32_t m_meanPktSize;   //!< Avg pkt size
-  uint32_t m_idlePktSize;   //!< Avg pkt size used during idle times
   bool m_isWait;            //!< True for waiting between dropped packets
   bool m_isGentleIn;          //!< True to increases dropping prob. slowly when ave queue exceeds maxthresh
   bool m_isGentleOut;          //!< True to increases dropping prob. slowly when ave queue exceeds maxthresh
