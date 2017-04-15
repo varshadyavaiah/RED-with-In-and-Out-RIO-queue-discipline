@@ -37,19 +37,6 @@ public:
    */
 
   virtual ~RioQueueDisc ();
-
-  /* The structure that gives you the flow stats*/
-  
-  
-  typedef struct 
-  {
-    uint32_t rx_bytes = 0;
-    double avg_rate= 0;
-    Time t_front= Simulator::Now(); 
-  }flow_info;
-
-  /* map between flow id and respective flow info*/
-  std::map<uint32_t,flow_info> flow_map;
  
   /**
    * \brief Stats
