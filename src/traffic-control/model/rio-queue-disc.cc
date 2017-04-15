@@ -9,6 +9,7 @@
 #include "ns3/net-device-queue-interface.h"
 //#include "ns3/flow-monitor-module.h"
 #include <map>
+#include "ns3/ipv4-queue-disc-item.h"
 
 namespace ns3 {
 
@@ -207,6 +208,12 @@ RioQueueDisc::AssignStreams (int64_t stream)
 bool RioQueueDisc::In_or_Out(Ptr<QueueDiscItem> item )
 {
 
+	Ptr<Ipv4QueueDiscItem> ip_packet = DynamicCast<Ipv4QueueDiscItem>(item); 	
+ 	Ipv4Header m_header;
+ 	m_header=ip_packet->GetHeader();
+ 	Ipv4Header::DscpType d_header = m_header.GetDscp();
+ 	std::cout<<d_header;
+
 	uint32_t flowid;
 	flowid = Classify(item);
   	
@@ -227,10 +234,11 @@ bool RioQueueDisc::In_or_Out(Ptr<QueueDiscItem> item )
  	flow_map[flowid].t_front=now;
         flow_map[flowid].rx_bytes=flowstats[flowid];
 
-    if(flow_map[flowid].avg_rate <= m_targetRate)
+   /* if(flow_map[flowid].avg_rate <= m_targetRate)
        return true;
     else 
        return false;
+       */
        
 }
 
