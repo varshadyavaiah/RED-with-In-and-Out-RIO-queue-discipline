@@ -7,6 +7,8 @@
 #include "rio-queue-disc.h"
 #include "ns3/drop-tail-queue.h"
 #include "ns3/net-device-queue-interface.h"
+//#include "ns3/flow-monitor-module.h"
+#include <map>
 
 namespace ns3 {
 
@@ -115,6 +117,11 @@ TypeId RioQueueDisc::GetTypeId (void)
                    UintegerValue (1),
                    MakeUintegerAccessor (&RioQueueDisc::SetPriorityMethod),
                    MakeUintegerChecker<uint32_t> ())
+    .AddAttribute ("TargetRate",
+                   "Flows with flow rate greater than target rate are OUT",
+                   DoubleValue (1),
+                   MakeDoubleAccessor (&RioQueueDisc::m_targetRate),
+                   MakeDoubleChecker<double> ())
   ;
 
   return tid;
@@ -196,6 +203,36 @@ RioQueueDisc::AssignStreams (int64_t stream)
   return 1;
 }
 
+// The function returns true if in, else reutrns false
+bool RioQueueDisc::In_or_Out(Ptr<QueueDiscItem> item )
+{
+
+	uint32_t flowid;
+	flowid = Classify(item);
+  	
+  	if(flow_map.find(flowid)==flow_map.end())
+ 	{
+ 	   flow_info temp;
+ 	   flow_map[flowid]=temp;
+ 	}
+ 	
+	
+	Time now=Simulator::Now();
+	
+	std::map <uint32_t,uint32_t> flowstats;
+	
+	flowstats[flowid] += item->GetSize ();//
+	
+ 	flow_map[flowid].avg_rate=(flowstats[flowid]-flow_map[flowid].rx_bytes)/ (double)(now-flow_map[flowid].t_front).GetSeconds();
+ 	flow_map[flowid].t_front=now;
+        flow_map[flowid].rx_bytes=flowstats[flowid];
+
+    if(flow_map[flowid].avg_rate <= m_targetRate)
+       return true;
+    else 
+       return false;
+       
+}
 
 /* variables added m_idleIn, m_countBytesIn, nQueuedIn */
 
@@ -230,7 +267,7 @@ RioQueueDisc::DoDequeue (void)
   if (p != 0)
     {
      
-      m_flow = Classify(p);
+      m_flow = In_or_Out(p);
       if (m_flow)
         {
           /* Regular In packets */
@@ -304,9 +341,9 @@ bool RioQueueDisc::DoEnqueue (Ptr<QueueDiscItem> item)
   if (m_priorityMethod == 1)
     {
       /*Add ns3 equivalent */
-      m_flow = Classify (item);
+      m_flow = In_or_Out (item);
     }
-
+  
   uint32_t qLen;
   uint32_t qLenIn;
 
