@@ -7,7 +7,6 @@
 #include "ns3/data-rate.h"
 #include "ns3/random-variable-stream.h"
 #include "ns3/simulator.h"
-#include <map>
 
 namespace ns3 {
 
@@ -37,7 +36,9 @@ public:
    */
 
   virtual ~RioQueueDisc ();
- 
+
+  
+
   /**
    * \brief Stats
    */
@@ -50,9 +51,8 @@ public:
     uint32_t forcedMark;                //!< Forced marks, qavg > max threshold
   } Stats;
 
-  /* tells whether pkt is In or Out. Takes the packet as input.*/
+  /* tells whether pkt is In or Out*/
   bool In_or_Out(Ptr<QueueDiscItem> item );
-  
   
   /**
    * \brief Drop types
@@ -63,6 +63,10 @@ public:
     DTYPE_FORCED,              //!< A "forced" drop
     DTYPE_UNFORCED,            //!< An "unforced" (random) drop
   };
+
+
+
+
 
   /**
    * \brief Enumeration of the modes supported in the class.

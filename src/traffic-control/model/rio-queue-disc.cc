@@ -11,6 +11,8 @@
 #include <map>
 #include "ns3/ipv4-queue-disc-item.h"
 
+
+
 namespace ns3 {
 
 NS_LOG_COMPONENT_DEFINE ("RioQueueDisc");
@@ -204,41 +206,26 @@ RioQueueDisc::AssignStreams (int64_t stream)
   return 1;
 }
 
-// The function returns true if in, else reutrns false
+
+
 bool RioQueueDisc::In_or_Out(Ptr<QueueDiscItem> item )
 {
 
-	Ptr<Ipv4QueueDiscItem> ip_packet = DynamicCast<Ipv4QueueDiscItem>(item); 	
+	
+ 	
+ 	// Extracting ip header and Dscp type
+ 	Ptr<Ipv4QueueDiscItem> ip_packet = DynamicCast<Ipv4QueueDiscItem>(item); 	
  	Ipv4Header m_header;
  	m_header=ip_packet->GetHeader();
  	Ipv4Header::DscpType d_header = m_header.GetDscp();
  	std::cout<<d_header;
-
-	uint32_t flowid;
-	flowid = Classify(item);
-  	
-  	if(flow_map.find(flowid)==flow_map.end())
- 	{
- 	   flow_info temp;
- 	   flow_map[flowid]=temp;
- 	}
  	
-	
-	Time now=Simulator::Now();
-	
-	std::map <uint32_t,uint32_t> flowstats;
-	
-	flowstats[flowid] += item->GetSize ();//
-	
- 	flow_map[flowid].avg_rate=(flowstats[flowid]-flow_map[flowid].rx_bytes)/ (double)(now-flow_map[flowid].t_front).GetSeconds();
- 	flow_map[flowid].t_front=now;
-        flow_map[flowid].rx_bytes=flowstats[flowid];
-
-   /* if(flow_map[flowid].avg_rate <= m_targetRate)
+ 	
+    //checking for In packets
+    if(d_header == 0x0A || d_header == 0x12 || d_header == 0x1A || d_header==0x22)
        return true;
     else 
        return false;
-       */
        
 }
 
