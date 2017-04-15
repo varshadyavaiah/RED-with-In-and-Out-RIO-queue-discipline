@@ -120,11 +120,6 @@ TypeId RioQueueDisc::GetTypeId (void)
                    UintegerValue (1),
                    MakeUintegerAccessor (&RioQueueDisc::SetPriorityMethod),
                    MakeUintegerChecker<uint32_t> ())
-    .AddAttribute ("TargetRate",
-                   "Flows with flow rate greater than target rate are OUT",
-                   DoubleValue (1),
-                   MakeDoubleAccessor (&RioQueueDisc::m_targetRate),
-                   MakeDoubleChecker<double> ())
   ;
 
   return tid;
@@ -208,7 +203,7 @@ RioQueueDisc::AssignStreams (int64_t stream)
 
 
 
-bool RioQueueDisc::In_or_Out(Ptr<QueueDiscItem> item )
+bool RioQueueDisc::InOrOut(Ptr<QueueDiscItem> item )
 {
 
 	
@@ -218,9 +213,9 @@ bool RioQueueDisc::In_or_Out(Ptr<QueueDiscItem> item )
  	Ipv4Header m_header;
  	m_header=ip_packet->GetHeader();
  	Ipv4Header::DscpType d_header = m_header.GetDscp();
- 	std::cout<<d_header;
+ 	//std::cout<<d_header;
  	
- 	
+ 	// Packets with DSCP type: DSCP_AF11, DSCP_AF21, DSCP_AF31 and DSCP_AF41 are considered to be IN else OUT pkt
     //checking for In packets
     if(d_header == 0x0A || d_header == 0x12 || d_header == 0x1A || d_header==0x22)
        return true;
@@ -262,13 +257,13 @@ RioQueueDisc::DoDequeue (void)
   if (p != 0)
     {
      
-      m_flow = In_or_Out(p);
+      m_flow = InOrOut(p);
       if (m_flow)
         {
           /* Regular In packets */
           m_idleIn = false;
-          inbcount -= p->GetSize ();
-          --inlen;
+          m_inBcount -= p->GetSize ();
+          --m_inLen;
         }
     }
   else
@@ -336,7 +331,7 @@ bool RioQueueDisc::DoEnqueue (Ptr<QueueDiscItem> item)
   if (m_priorityMethod == 1)
     {
       /*Add ns3 equivalent */
-      m_flow = In_or_Out (item);
+      m_flow = InOrOut (item);
     }
   
   uint32_t qLen;
@@ -346,12 +341,12 @@ bool RioQueueDisc::DoEnqueue (Ptr<QueueDiscItem> item)
     {
 
       qLen = GetInternalQueue (0)->GetNBytes ();
-      qLenIn = inbcount;
+      qLenIn = m_inBcount;
     }
   else
     {
       qLen = GetInternalQueue (0)->GetNPackets ();
-      qLenIn = inlen;
+      qLenIn = m_inLen;
     }
   /*Add ns3 equivalent */
 
@@ -465,8 +460,8 @@ bool RioQueueDisc::DoEnqueue (Ptr<QueueDiscItem> item)
             {
               NS_LOG_DEBUG ("\t Dropping In pkt due to Prob Mark " << m_qAvgIn);
               m_stats.unforcedDrop++;
-              --inlen;
-              inbcount -= item->GetSize ();
+              --m_inLen;
+              m_inBcount -= item->GetSize ();
               Drop (item);
 
               return false;
@@ -482,8 +477,8 @@ bool RioQueueDisc::DoEnqueue (Ptr<QueueDiscItem> item)
             {
               NS_LOG_DEBUG ("\t Dropping In pkt due to Hard Mark " << m_qAvgIn);
               m_stats.forcedDrop++;
-              --inlen;
-              inbcount -= item->GetSize ();
+              --m_inLen;
+              m_inBcount -= item->GetSize ();
               Drop (item);
               if (m_isNs1Compat)
                 {
@@ -499,8 +494,8 @@ bool RioQueueDisc::DoEnqueue (Ptr<QueueDiscItem> item)
 
         }
       bool retval = GetInternalQueue (0)->Enqueue (item);
-      ++inlen;
-      inbcount += item->GetSize ();
+      ++m_inLen;
+      m_inBcount += item->GetSize ();
       if (!retval)
         {
           m_stats.qLimDrop++;
@@ -930,8 +925,8 @@ RioQueueDisc::InitializeParams (void)
   m_idle = true;
   m_idleIn = true;
 
-  inlen = 0;
-  inbcount = 0;
+  m_inLen = 0;
+  m_inBcount = 0;
 
   m_priorityMethod = 1;
 

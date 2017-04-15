@@ -52,7 +52,7 @@ public:
   } Stats;
 
   /* tells whether pkt is In or Out*/
-  bool In_or_Out(Ptr<QueueDiscItem> item );
+  bool InOrOut(Ptr<QueueDiscItem> item );
   
   /**
    * \brief Drop types
@@ -223,7 +223,6 @@ private:
   bool m_useHardDrop;       //!< True if packets are always dropped above max threshold
   double m_lIntermIn;         //!< The max probability of dropping a packet
   double m_lIntermOut;         //!< The max probability of dropping a packet
-  double m_targetRate;         //!< Target rate above which pkts are OUT, else IN
 
 
   // ** Variables maintained by RIO
@@ -259,8 +258,8 @@ private:
 
   Ptr<UniformRandomVariable> m_uv;  //!< rng stream
 
-  uint32_t inlen;       /* In Packets count */
-  uint32_t inbcount;    /* In packets byte count */
+  uint32_t m_inLen;       /* In Packets count */
+  uint32_t m_inBcount;    /* In packets byte count */
 
   uint32_t m_priorityMethod;    /* 0 to leave priority field in header, */
                                 /*  1 to use flowid as priority.  */
