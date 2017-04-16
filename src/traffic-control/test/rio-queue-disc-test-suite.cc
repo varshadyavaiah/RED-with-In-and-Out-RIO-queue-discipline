@@ -106,16 +106,6 @@ RioQueueDiscTestCase::RioQueueDiscTestCase ()
 void
 RioQueueDiscTestCase::RunRioTest (StringValue mode)
 {
-/*Queue/RED/RIO set in_thresh_ 10
-    Queue/RED/RIO set in_maxthresh_ 20
-    Queue/RED/RIO set out_thresh_ 3
-    Queue/RED/RIO set out_maxthresh_ 9
-    Queue/RED/RIO set in_linterm_ 10
-    Queue/RED/RIO set linterm_ 10
-    Queue/RED/RIO set priority_method_ 1
-    #Queue/RED/RIO set debug_ true
-    Queue/RED/RIO set debug_ false
-    $self next pktTraceFile*/
   uint32_t pktSize = 0;
   // 1 for packets; pktSize for bytes
   uint32_t modeSize = 1;
@@ -204,7 +194,43 @@ RioQueueDiscTestCase::RunRioTest (StringValue mode)
   item = queue->Dequeue ();
   NS_TEST_EXPECT_MSG_EQ ((item == 0), true, "There are really no packets in there");
 
- 
+  // test 2: more Out pkt drops than In pkt drops
+/*Queue/RED/RIO set in_thresh_ 10
+    Queue/RED/RIO set in_maxthresh_ 20
+    Queue/RED/RIO set out_thresh_ 3
+    Queue/RED/RIO set out_maxthresh_ 9
+    Queue/RED/RIO set in_linterm_ 10
+    Queue/RED/RIO set linterm_ 10
+    Queue/RED/RIO set priority_method_ 1
+    #Queue/RED/RIO set debug_ true
+    Queue/RED/RIO set debug_ false
+    $self next pktTraceFile*/
+  queue = CreateObject<RioQueueDisc> ();
+  minThIn = 10 * modeSize;
+  maxThIn = 30 * modeSize;
+  minThOut = 3 * modeSize;
+  maxThOut = 9 * modeSize;
+  qSize = 300 * modeSize;
+  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("Mode", mode), true,
+                         "Verify that we can actually set the attribute Mode");
+  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("MinThIn", DoubleValue (minThIn)), true,
+                         "Verify that we can actually set the attribute MinThIn");
+  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("MaxThIn", DoubleValue (maxThIn)), true,
+                         "Verify that we can actually set the attribute MaxThIn");
+  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("MinThOut", DoubleValue (minThOut)), true,
+                         "Verify that we can actually set the attribute MinThOut");
+  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("MaxThOut", DoubleValue (maxThOut)), true,
+                         "Verify that we can actually set the attribute MaxThOut");
+  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("QueueLimit", UintegerValue (qSize)), true,
+                         "Verify that we can actually set the attribute QueueLimit");
+  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("LIntermIn", DoubleValue (10)), true,
+                         "Verify that we can actually set the attribute LIntermIn");
+  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("LIntermOut", DoubleValue (10)), true,
+                         "Verify that we can actually set the attribute LIntermOut");
+  queue->Initialize ();
+  Enqueue (queue, pktSize, 300, false);
+  RioQueueDisc::Stats st = StaticCast<RioQueueDisc> (queue)->GetStats ();
+  NS_TEST_EXPECT_MSG_GT (st.dropOut, st.dropIn, "Out pkts should be dropped more than In pkts");
   
 }
 

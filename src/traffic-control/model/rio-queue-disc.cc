@@ -210,7 +210,7 @@ bool RioQueueDisc::InOrOut(Ptr<QueueDiscItem> item )
  	Ipv4Header m_header;
  	m_header=ip_packet->GetHeader();
 	Ipv4Header::DscpType d_header = m_header.GetDscp();
- 	//std::cout<<d_header;
+ 	std::cout<<d_header<<"\n";
  	
  	// Packets with DSCP type: DSCP_AF11, DSCP_AF21, DSCP_AF31 and DSCP_AF41 are considered to be IN else OUT pkt
     //checking for In packets
@@ -457,6 +457,7 @@ bool RioQueueDisc::DoEnqueue (Ptr<QueueDiscItem> item)
             {
               NS_LOG_DEBUG ("\t Dropping In pkt due to Prob Mark " << m_qAvgIn);
               m_stats.unforcedDrop++;
+              m_stats.dropIn++;
               --m_inLen;
               m_inBcount -= item->GetSize ();
               Drop (item);
@@ -474,6 +475,7 @@ bool RioQueueDisc::DoEnqueue (Ptr<QueueDiscItem> item)
             {
               NS_LOG_DEBUG ("\t Dropping In pkt due to Hard Mark " << m_qAvgIn);
               m_stats.forcedDrop++;
+              m_stats.dropIn++;
               --m_inLen;
               m_inBcount -= item->GetSize ();
               Drop (item);
@@ -589,6 +591,7 @@ bool RioQueueDisc::DoEnqueue (Ptr<QueueDiscItem> item)
               NS_LOG_DEBUG ("\t Dropping Out pkt due to Prob Mark " << m_qAvg);
               m_stats.unforcedDrop++;
               Drop (item);
+              m_stats.dropOut++;
               return false;
             }
           NS_LOG_DEBUG ("\t Marking Out pkt due to Prob Mark " << m_qAvg);
@@ -603,6 +606,7 @@ bool RioQueueDisc::DoEnqueue (Ptr<QueueDiscItem> item)
             {
               NS_LOG_DEBUG ("\t Dropping Out pkt due to Hard Mark " << m_qAvg);
               m_stats.forcedDrop++;
+              m_stats.dropOut++;
               Drop (item);
               if (m_isNs1Compat)
                 {
