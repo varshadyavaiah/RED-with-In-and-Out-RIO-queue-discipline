@@ -230,7 +230,40 @@ RioQueueDiscTestCase::RunRioTest (StringValue mode)
   queue->Initialize ();
   Enqueue (queue, pktSize, 300, false);
   RioQueueDisc::Stats st = StaticCast<RioQueueDisc> (queue)->GetStats ();
+  drop.test2 = st.unforcedDrop + st.forcedDrop + st.qLimDrop;
   NS_TEST_EXPECT_MSG_GT (st.dropOut, st.dropIn, "Out pkts should be dropped more than In pkts");
+
+  // save number of drops from tests
+  struct d {
+    uint32_t test2;
+    uint32_t test3;
+  } drop;
+
+
+  // test 3: reduced maxTh, this causes more drops
+  maxThIn = 20 * modeSize;
+  minThOut = 3 * modeSize;
+  maxThOut = 5 * modeSize;
+  queue = CreateObject<RioQueueDisc> ();
+  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("Mode", mode), true,
+                         "Verify that we can actually set the attribute Mode");
+  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("MinThIn", DoubleValue (minThIn)), true,
+                         "Verify that we can actually set the attribute MinThIn");
+  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("MinThOut", DoubleValue (minThOut)), true,
+                         "Verify that we can actually set the attribute MinThOut");
+  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("MaxThIn", DoubleValue (maxThIn)), true,
+                         "Verify that we can actually set the attribute MaxThIn");
+  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("MaxThOut", DoubleValue (maxThOut)), true,
+                         "Verify that we can actually set the attribute MaxThOut");
+  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("QueueLimit", UintegerValue (qSize)), true,
+                         "Verify that we can actually set the attribute QueueLimit");
+  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("QW", DoubleValue (0.020)), true,
+                         "Verify that we can actually set the attribute QW");
+  queue->Initialize ();
+  Enqueue (queue, pktSize, 300, false);
+  st = StaticCast<RioQueueDisc> (queue)->GetStats ();
+  drop.test3 = st.unforcedDrop + st.forcedDrop + st.qLimDrop;
+  NS_TEST_EXPECT_MSG_GT (drop.test3, drop.test2, "Test 3 should have more drops than test 2");
   
 }
 
