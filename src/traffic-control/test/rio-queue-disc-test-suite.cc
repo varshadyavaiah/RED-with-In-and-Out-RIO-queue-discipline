@@ -106,6 +106,16 @@ RioQueueDiscTestCase::RioQueueDiscTestCase ()
 void
 RioQueueDiscTestCase::RunRioTest (StringValue mode)
 {
+/*Queue/RED/RIO set in_thresh_ 10
+    Queue/RED/RIO set in_maxthresh_ 20
+    Queue/RED/RIO set out_thresh_ 3
+    Queue/RED/RIO set out_maxthresh_ 9
+    Queue/RED/RIO set in_linterm_ 10
+    Queue/RED/RIO set linterm_ 10
+    Queue/RED/RIO set priority_method_ 1
+    #Queue/RED/RIO set debug_ true
+    Queue/RED/RIO set debug_ false
+    $self next pktTraceFile*/
   uint32_t pktSize = 0;
   // 1 for packets; pktSize for bytes
   uint32_t modeSize = 1;
@@ -155,6 +165,7 @@ RioQueueDiscTestCase::RunRioTest (StringValue mode)
 
   queue->Initialize ();
   NS_TEST_EXPECT_MSG_EQ (queue->GetQueueSize (), 0 * modeSize, "There should be no packets in there");
+
   queue->Enqueue (Create<RioQueueDiscTestItem> (p1, dest, 0, false));
   NS_TEST_EXPECT_MSG_EQ (queue->GetQueueSize (), 1 * modeSize, "There should be one packet in there");
   queue->Enqueue (Create<RioQueueDiscTestItem> (p2, dest, 0, false));
@@ -193,276 +204,8 @@ RioQueueDiscTestCase::RunRioTest (StringValue mode)
   item = queue->Dequeue ();
   NS_TEST_EXPECT_MSG_EQ ((item == 0), true, "There are really no packets in there");
 
-
-  // test 2: more data, but with no drops
-  queue = CreateObject<RioQueueDisc> ();
-  minThIn = 70 * modeSize;
-  maxThIn = 150 * modeSize;
-  minThOut = 70 * modeSize;
-  maxThOut = 150 * modeSize;
-  qSize = 300 * modeSize;
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("Mode", mode), true,
-                         "Verify that we can actually set the attribute Mode");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("MinThIn", DoubleValue (minThIn)), true,
-                         "Verify that we can actually set the attribute MinThIn");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("MaxThIn", DoubleValue (maxThIn)), true,
-                         "Verify that we can actually set the attribute MaxThIn");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("MinThOut", DoubleValue (minThOut)), true,
-                         "Verify that we can actually set the attribute MinThOut");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("MaxThOut", DoubleValue (maxThOut)), true,
-                         "Verify that we can actually set the attribute MaxThOut");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("QueueLimit", UintegerValue (qSize)), true,
-                         "Verify that we can actually set the attribute QueueLimit");
-  queue->Initialize ();
-  Enqueue (queue, pktSize, 300, false);
-  RioQueueDisc::Stats st = StaticCast<RioQueueDisc> (queue)->GetStats ();
-  NS_TEST_EXPECT_MSG_EQ (st.unforcedDrop, 0, "There should zero dropped packets due probability mark");
-  NS_TEST_EXPECT_MSG_EQ (st.forcedDrop, 0, "There should zero dropped packets due hardmark mark");
-  NS_TEST_EXPECT_MSG_EQ (st.qLimDrop, 0, "There should zero dropped packets due queue full");
-
-  // save number of drops from tests
-  struct d {
-    uint32_t test3;
-    uint32_t test4;
-    uint32_t test5;
-    uint32_t test6;
-    uint32_t test7;
-  } drop;
-
-
-  // test 3: more data, now drops due QW change
-  queue = CreateObject<RioQueueDisc> ();
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("Mode", mode), true,
-                         "Verify that we can actually set the attribute Mode");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("MinThIn", DoubleValue (minThIn)), true,
-                         "Verify that we can actually set the attribute MinThIn");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("MaxThIn", DoubleValue (maxThIn)), true,
-                         "Verify that we can actually set the attribute MaxThIn");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("MinThOut", DoubleValue (minThOut)), true,
-                         "Verify that we can actually set the attribute MinThOut");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("MaxThOut", DoubleValue (maxThOut)), true,
-                         "Verify that we can actually set the attribute MaxThOut");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("QueueLimit", UintegerValue (qSize)), true,
-                         "Verify that we can actually set the attribute QueueLimit");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("QW", DoubleValue (0.020)), true,
-                         "Verify that we can actually set the attribute QW");
-  queue->Initialize ();
-  Enqueue (queue, pktSize, 300, false);
-  st = StaticCast<RioQueueDisc> (queue)->GetStats ();
-  drop.test3 = st.unforcedDrop + st.forcedDrop + st.qLimDrop;
-  NS_TEST_EXPECT_MSG_NE (drop.test3, 0, "There should be some dropped packets");
-
-
-  // test 4: riouced maxTh, this causes more drops
-  maxThIn = 100 * modeSize;
-  maxThOut = 100 * modeSize;
-  queue = CreateObject<RioQueueDisc> ();
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("Mode", mode), true,
-                         "Verify that we can actually set the attribute Mode");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("MinThIn", DoubleValue (minThIn)), true,
-                         "Verify that we can actually set the attribute MinThIn");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("MaxThIn", DoubleValue (maxThIn)), true,
-                         "Verify that we can actually set the attribute MaxThIn");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("MinThOut", DoubleValue (minThOut)), true,
-                         "Verify that we can actually set the attribute MinThOut");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("MaxThOut", DoubleValue (maxThOut)), true,
-                         "Verify that we can actually set the attribute MaxThOut");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("QueueLimit", UintegerValue (qSize)), true,
-                         "Verify that we can actually set the attribute QueueLimit");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("QW", DoubleValue (0.020)), true,
-                         "Verify that we can actually set the attribute QW");
-  queue->Initialize ();
-  Enqueue (queue, pktSize, 300, false);
-  st = StaticCast<RioQueueDisc> (queue)->GetStats ();
-  drop.test4 = st.unforcedDrop + st.forcedDrop + st.qLimDrop;
-  NS_TEST_EXPECT_MSG_GT (drop.test4, drop.test3, "Test 4 should have more drops than test 3");
-
-
-  // test 5: change drop probability to a high value (LInterm)
-  maxThIn = 300 * modeSize;
-  maxThOut = 150 * modeSize;
-  queue = CreateObject<RioQueueDisc> ();
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("Mode", mode), true,
-                         "Verify that we can actually set the attribute Mode");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("MinThIn", DoubleValue (minThIn)), true,
-                         "Verify that we can actually set the attribute MinThIn");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("MaxThIn", DoubleValue (maxThIn)), true,
-                         "Verify that we can actually set the attribute MaxThIn");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("MinThOut", DoubleValue (minThOut)), true,
-                         "Verify that we can actually set the attribute MinThOut");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("MaxThOut", DoubleValue (maxThOut)), true,
-                         "Verify that we can actually set the attribute MaxThOut");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("QueueLimit", UintegerValue (qSize)), true,
-                         "Verify that we can actually set the attribute QueueLimit");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("QW", DoubleValue (0.020)), true,
-                         "Verify that we can actually set the attribute QW");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("LIntermIn", DoubleValue (5)), true,
-                         "Verify that we can actually set the attribute LIntermIn");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("LIntermOut", DoubleValue (5)), true,
-                         "Verify that we can actually set the attribute LIntermIn");
-  queue->Initialize ();
-  Enqueue (queue, pktSize, 300, false);
-  st = StaticCast<RioQueueDisc> (queue)->GetStats ();
-  drop.test5 = st.unforcedDrop + st.forcedDrop + st.qLimDrop;
-  NS_TEST_EXPECT_MSG_GT (drop.test5, drop.test3, "Test 5 should have more drops than test 3");
-
-
-  // test 6: disable Gentle param
-  queue = CreateObject<RioQueueDisc> ();
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("Mode", mode), true,
-                         "Verify that we can actually set the attribute Mode");
- NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("MinThIn", DoubleValue (minThIn)), true,
-                         "Verify that we can actually set the attribute MinThIn");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("MaxThIn", DoubleValue (maxThIn)), true,
-                         "Verify that we can actually set the attribute MaxThIn");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("MinThOut", DoubleValue (minThOut)), true,
-                         "Verify that we can actually set the attribute MinThOut");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("MaxThOut", DoubleValue (maxThOut)), true,
-                         "Verify that we can actually set the attribute MaxThOut");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("QueueLimit", UintegerValue (qSize)), true,
-                         "Verify that we can actually set the attribute QueueLimit");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("QW", DoubleValue (0.020)), true,
-                         "Verify that we can actually set the attribute QW");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("GentleIn", BooleanValue (false)), true,
-                         "Verify that we can actually set the attribute GentleIn");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("GentleOut", BooleanValue (false)), true,
-                         "Verify that we can actually set the attribute GentleOut");
-  queue->Initialize ();
-  Enqueue (queue, pktSize, 300, false);
-  st = StaticCast<RioQueueDisc> (queue)->GetStats ();
-  drop.test6 = st.unforcedDrop + st.forcedDrop + st.qLimDrop;
-  NS_TEST_EXPECT_MSG_GT (drop.test6, drop.test3, "Test 6 should have more drops than test 3");
-
-
-  // test 7: disable Wait param
-  queue = CreateObject<RioQueueDisc> ();
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("Mode", mode), true,
-                         "Verify that we can actually set the attribute Mode");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("MinThIn", DoubleValue (minThIn)), true,
-                         "Verify that we can actually set the attribute MinThIn");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("MaxThIn", DoubleValue (maxThIn)), true,
-                         "Verify that we can actually set the attribute MaxThIn");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("MinThOut", DoubleValue (minThOut)), true,
-                         "Verify that we can actually set the attribute MinThOut");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("MaxThOut", DoubleValue (maxThOut)), true,
-                         "Verify that we can actually set the attribute MaxThOut");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("QueueLimit", UintegerValue (qSize)), true,
-                         "Verify that we can actually set the attribute QueueLimit");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("QW", DoubleValue (0.020)), true,
-                         "Verify that we can actually set the attribute QW");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("Wait", BooleanValue (false)), true,
-                         "Verify that we can actually set the attribute Wait");
-  queue->Initialize ();
-  Enqueue (queue, pktSize, 300, false);
-  st = StaticCast<RioQueueDisc> (queue)->GetStats ();
-  drop.test7 = st.unforcedDrop + st.forcedDrop + st.qLimDrop;
-  NS_TEST_EXPECT_MSG_GT (drop.test7, drop.test3, "Test 7 should have more drops than test 3");
-
-
-  // test 8: RIO queue disc is ECN enabled, but packets are not ECN capable
-  queue = CreateObject<RioQueueDisc> ();
-  minThIn = 90 * modeSize;
-  maxThIn = 180 * modeSize;
-  minThOut = 30 * modeSize;
-  maxThOut = 90 * modeSize;
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("Mode", mode), true,
-                         "Verify that we can actually set the attribute Mode");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("MinThIn", DoubleValue (minThIn)), true,
-                         "Verify that we can actually set the attribute MinThIn");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("MaxThIn", DoubleValue (maxThIn)), true,
-                         "Verify that we can actually set the attribute MaxThIn");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("MinThOut", DoubleValue (minThOut)), true,
-                         "Verify that we can actually set the attribute MinThOut");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("MaxThOut", DoubleValue (maxThOut)), true,
-                         "Verify that we can actually set the attribute MaxThOut");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("QueueLimit", UintegerValue (qSize)), true,
-                         "Verify that we can actually set the attribute QueueLimit");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("QW", DoubleValue (0.002)), true,
-                         "Verify that we can actually set the attribute QW");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("LIntermIn", DoubleValue (2)), true,
-                         "Verify that we can actually set the attribute LIntermIn");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("LIntermOut", DoubleValue (2)), true,
-                         "Verify that we can actually set the attribute LIntermOut");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("GentleIn", BooleanValue (true)), true,
-                         "Verify that we can actually set the attribute GentleIn");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("GentleOut", BooleanValue (true)), true,
-                         "Verify that we can actually set the attribute GentleOut");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("UseEcn", BooleanValue (true)), true,
-                         "Verify that we can actually set the attribute UseECN");
-  queue->Initialize ();
-  Enqueue (queue, pktSize, 300, false);
-  st = StaticCast<RioQueueDisc> (queue)->GetStats ();
-  // Packets are not ECN capable, so there should be only unforced drops, no unforced marks
-  NS_TEST_EXPECT_MSG_NE (st.unforcedDrop, 0, "There should be some unforced drops");
-  NS_TEST_EXPECT_MSG_EQ (st.unforcedMark, 0, "There should be no unforced marks");
-
-
-  // test 9: Packets are ECN capable, but RIO queue disc is not ECN enabled
-  queue = CreateObject<RioQueueDisc> ();
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("Mode", mode), true,
-                         "Verify that we can actually set the attribute Mode");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("MinThIn", DoubleValue (minThIn)), true,
-                         "Verify that we can actually set the attribute MinThIn");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("MaxThIn", DoubleValue (maxThIn)), true,
-                         "Verify that we can actually set the attribute MaxThIn");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("MinThOut", DoubleValue (minThOut)), true,
-                         "Verify that we can actually set the attribute MinThOut");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("MaxThOut", DoubleValue (maxThOut)), true,
-                         "Verify that we can actually set the attribute MaxThOut");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("QueueLimit", UintegerValue (qSize)), true,
-                         "Verify that we can actually set the attribute QueueLimit");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("QW", DoubleValue (0.002)), true,
-                         "Verify that we can actually set the attribute QW");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("LIntermIn", DoubleValue (2)), true,
-                         "Verify that we can actually set the attribute LIntermIn");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("LIntermOut", DoubleValue (2)), true,
-                         "Verify that we can actually set the attribute LIntermOut");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("GentleIn", BooleanValue (true)), true,
-                         "Verify that we can actually set the attribute GentleIn");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("GentleOut", BooleanValue (true)), true,
-                         "Verify that we can actually set the attribute GentleOut");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("UseEcn", BooleanValue (false)), true,
-                         "Verify that we can actually set the attribute UseECN");
-  queue->Initialize ();
-  Enqueue (queue, pktSize, 300, true);
-  st = StaticCast<RioQueueDisc> (queue)->GetStats ();
-  // RIO queue disc is not ECN enabled, so there should be only unforced drops, no unforced marks
-  NS_TEST_EXPECT_MSG_NE (st.unforcedDrop, 0, "There should be some unforced drops");
-  NS_TEST_EXPECT_MSG_EQ (st.unforcedMark, 0, "There should be no unforced marks");
-
-
-  // test 10: Packets are ECN capable and RIO queue disc is ECN enabled
-  queue = CreateObject<RioQueueDisc> ();
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("Mode", mode), true,
-                         "Verify that we can actually set the attribute Mode");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("MinThIn", DoubleValue (minThIn)), true,
-                         "Verify that we can actually set the attribute MinThIn");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("MaxThIn", DoubleValue (maxThIn)), true,
-                         "Verify that we can actually set the attribute MaxThIn");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("MinThOut", DoubleValue (minThOut)), true,
-                         "Verify that we can actually set the attribute MinThOut");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("MaxThOut", DoubleValue (maxThOut)), true,
-                         "Verify that we can actually set the attribute MaxThOut");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("QueueLimit", UintegerValue (qSize)), true,
-                         "Verify that we can actually set the attribute QueueLimit");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("QW", DoubleValue (0.002)), true,
-                         "Verify that we can actually set the attribute QW");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("LIntermIn", DoubleValue (2)), true,
-                         "Verify that we can actually set the attribute LIntermIn");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("LIntermOut", DoubleValue (2)), true,
-                         "Verify that we can actually set the attribute LIntermOut");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("GentleIn", BooleanValue (true)), true,
-                         "Verify that we can actually set the attribute GentleIn");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("GentleOut", BooleanValue (true)), true,
-                         "Verify that we can actually set the attribute GentleOut");
-  NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("UseEcn", BooleanValue (true)), true,
-                         "Verify that we can actually set the attribute UseECN");
-  queue->Initialize ();
-  Enqueue (queue, pktSize, 300, true);
-  st = StaticCast<RioQueueDisc> (queue)->GetStats ();
-  // Packets are ECN capable, RIO queue disc is ECN enabled; there should be only unforced marks, no unforced drops
-  NS_TEST_EXPECT_MSG_EQ (st.unforcedDrop, 0, "There should be no unforced drops");
-  NS_TEST_EXPECT_MSG_NE (st.unforcedMark, 0, "There should be some unforced marks");
+ 
+  
 }
 
 void 
