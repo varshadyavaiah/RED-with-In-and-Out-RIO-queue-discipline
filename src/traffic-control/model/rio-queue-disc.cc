@@ -205,14 +205,11 @@ RioQueueDisc::AssignStreams (int64_t stream)
 
 bool RioQueueDisc::InOrOut(Ptr<QueueDiscItem> item )
 {
-
-	
- 	
  	// Extracting ip header and Dscp type
- 	Ptr<Ipv4QueueDiscItem> ip_packet = DynamicCast<Ipv4QueueDiscItem>(item); 	
+ 	Ptr<Ipv4QueueDiscItem> ip_packet = StaticCast<Ipv4QueueDiscItem>(item);
  	Ipv4Header m_header;
  	m_header=ip_packet->GetHeader();
- 	Ipv4Header::DscpType d_header = m_header.GetDscp();
+	Ipv4Header::DscpType d_header = m_header.GetDscp();
  	//std::cout<<d_header;
  	
  	// Packets with DSCP type: DSCP_AF11, DSCP_AF21, DSCP_AF31 and DSCP_AF41 are considered to be IN else OUT pkt
