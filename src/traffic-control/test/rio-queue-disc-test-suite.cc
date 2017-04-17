@@ -6,6 +6,9 @@
 #include "ns3/double.h"
 #include "ns3/log.h"
 #include "ns3/simulator.h"
+#include "ns3/queue-disc.h"
+#include "ns3/ipv4-queue-disc-item.h"
+#include "ns3/ipv4-header.h"
 
 using namespace ns3;
 
@@ -202,21 +205,11 @@ RioQueueDiscTestCase::RunRioTest (StringValue mode)
   } drop;
 
   // test 2: more Out pkt drops than In pkt drops
-/*Queue/RED/RIO set in_thresh_ 10
-    Queue/RED/RIO set in_maxthresh_ 20
-    Queue/RED/RIO set out_thresh_ 3
-    Queue/RED/RIO set out_maxthresh_ 9
-    Queue/RED/RIO set in_linterm_ 10
-    Queue/RED/RIO set linterm_ 10
-    Queue/RED/RIO set priority_method_ 1
-    #Queue/RED/RIO set debug_ true
-    Queue/RED/RIO set debug_ false
-    $self next pktTraceFile*/
   queue = CreateObject<RioQueueDisc> ();
-  minThIn = 10 * modeSize;
+  minThIn = 15 * modeSize;
   maxThIn = 30 * modeSize;
-  minThOut = 3 * modeSize;
-  maxThOut = 9 * modeSize;
+  minThOut = 5 * modeSize;
+  maxThOut = 15 * modeSize;
   qSize = 300 * modeSize;
   NS_TEST_EXPECT_MSG_EQ (queue->SetAttributeFailSafe ("Mode", mode), true,
                          "Verify that we can actually set the attribute Mode");
@@ -297,7 +290,18 @@ void
 RioQueueDiscTestCase::Enqueue (Ptr<RioQueueDisc> queue, uint32_t size, uint32_t nPkt, bool ecnCapable)
 {
   Address dest;
-  for (uint32_t i = 0; i < nPkt; i++)
+  for (uint32_t i = 0; i < nPkt/2; i++)
+    {
+      Ipv4Header hdr;
+ 
+  Ipv4Header::DscpType dscp= Ipv4Header::DSCP_AF11;
+  hdr.SetDscp (dscp);
+  Ptr<Packet> p = Create<Packet> (size);
+  Address dest;
+  Ptr<QueueDiscItem> item = StaticCast<QueueDiscItem>(Create<Ipv4QueueDiscItem> (p, dest, 0, hdr));
+  queue->Enqueue (item);
+    }
+    for (uint32_t i = nPkt/2; i < nPkt; i++)
     {
       queue->Enqueue (Create<RioQueueDiscTestItem> (Create<Packet> (size), dest, 0, ecnCapable));
     }
