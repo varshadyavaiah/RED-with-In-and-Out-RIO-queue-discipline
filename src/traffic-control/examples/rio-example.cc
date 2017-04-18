@@ -23,7 +23,7 @@ NS_LOG_COMPONENT_DEFINE ("RioTests");
 
 uint32_t checkTimes;
 double avgQueueSize;
-double avgQueueSizeIn;
+//double avgQueueSizeIn;
 
 // The times
 double global_start_time;
@@ -52,10 +52,10 @@ void
 CheckQueueSize (Ptr<QueueDisc> queue)
 {
   uint32_t qSize = StaticCast<RioQueueDisc> (queue)->GetQueueSize ();
-  uint32_t qSizeIn = StaticCast<RioQueueDisc> (queue)->GetInQueueSize ();
+  //uint32_t qSizeIn = StaticCast<RioQueueDisc> (queue)->GetInQueueSize ();
 
   avgQueueSize += qSize;
-  avgQueueSizeIn += qSizeIn;
+  //avgQueueSizeIn += qSizeIn;
 
   checkTimes++;
 
