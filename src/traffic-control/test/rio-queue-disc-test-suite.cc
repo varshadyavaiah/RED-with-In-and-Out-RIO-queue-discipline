@@ -18,7 +18,8 @@ using namespace ns3;
  *
  * \brief Rio Queue Disc Test Item
  */
-class RioQueueDiscTestItem : public QueueDiscItem {
+class RioQueueDiscTestItem : public QueueDiscItem
+{
 public:
   /**
    * Constructor
@@ -31,7 +32,7 @@ public:
   RioQueueDiscTestItem (Ptr<Packet> p, const Address & addr, uint16_t protocol, bool ecnCapable);
   virtual ~RioQueueDiscTestItem ();
   virtual void AddHeader (void);
-  virtual bool Mark(void);
+  virtual bool Mark (void);
 
 private:
   RioQueueDiscTestItem ();
@@ -136,7 +137,7 @@ RioQueueDiscTestCase::RunRioTest (StringValue mode)
                          "Verify that we can actually set the attribute QW");
 
   Address dest;
-  
+
   if (queue->GetMode () == RioQueueDisc::QUEUE_DISC_MODE_BYTES)
     {
       // pktSize should be same as MeanPktSize to avoid performance gap between byte and packet mode
@@ -197,8 +198,9 @@ RioQueueDiscTestCase::RunRioTest (StringValue mode)
   item = queue->Dequeue ();
   NS_TEST_EXPECT_MSG_EQ ((item == 0), true, "There are really no packets in there");
 
-   // save number of drops from tests
-  struct d {
+  // save number of drops from tests
+  struct d
+  {
     uint32_t test2;
     uint32_t test3;
     uint32_t test4;
@@ -283,25 +285,25 @@ RioQueueDiscTestCase::RunRioTest (StringValue mode)
   st = StaticCast<RioQueueDisc> (queue)->GetStats ();
   drop.test4 = st.unforcedDrop + st.forcedDrop + st.qLimDrop;
   NS_TEST_EXPECT_MSG_GT (drop.test4, drop.test2, "Test 4 should have more drops than test 2");
-  
+
 }
 
-void 
+void
 RioQueueDiscTestCase::Enqueue (Ptr<RioQueueDisc> queue, uint32_t size, uint32_t nPkt, bool ecnCapable)
 {
   Address dest;
-  for (uint32_t i = 0; i < nPkt/2; i++)
+  for (uint32_t i = 0; i < nPkt / 2; i++)
     {
       Ipv4Header hdr;
- 
-  Ipv4Header::DscpType dscp= Ipv4Header::DSCP_AF11;
-  hdr.SetDscp (dscp);
-  Ptr<Packet> p = Create<Packet> (size);
-  Address dest;
-  Ptr<QueueDiscItem> item = StaticCast<QueueDiscItem>(Create<Ipv4QueueDiscItem> (p, dest, 0, hdr));
-  queue->Enqueue (item);
+
+      Ipv4Header::DscpType dscp = Ipv4Header::DSCP_AF11;
+      hdr.SetDscp (dscp);
+      Ptr<Packet> p = Create<Packet> (size);
+      Address dest;
+      Ptr<QueueDiscItem> item = StaticCast<QueueDiscItem> (Create<Ipv4QueueDiscItem> (p, dest, 0, hdr));
+      queue->Enqueue (item);
     }
-    for (uint32_t i = nPkt/2; i < nPkt; i++)
+  for (uint32_t i = nPkt / 2; i < nPkt; i++)
     {
       queue->Enqueue (Create<RioQueueDiscTestItem> (Create<Packet> (size), dest, 0, ecnCapable));
     }

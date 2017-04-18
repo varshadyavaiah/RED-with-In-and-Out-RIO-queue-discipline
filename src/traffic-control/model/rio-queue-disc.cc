@@ -203,22 +203,26 @@ RioQueueDisc::AssignStreams (int64_t stream)
 
 
 
-bool RioQueueDisc::InOrOut(Ptr<QueueDiscItem> item )
+bool RioQueueDisc::InOrOut (Ptr<QueueDiscItem> item )
 {
- 	// Extracting ip header and Dscp type
- 	Ptr<Ipv4QueueDiscItem> ip_packet = StaticCast<Ipv4QueueDiscItem>(item);
- 	Ipv4Header m_header;
- 	m_header=ip_packet->GetHeader();
-	Ipv4Header::DscpType d_header = m_header.GetDscp();
- 	std::cout<<d_header<<"\n";
- 	
- 	// Packets with DSCP type: DSCP_AF11, DSCP_AF21, DSCP_AF31 and DSCP_AF41 are considered to be IN else OUT pkt
-    //checking for In packets
-    if(d_header == 0x0A || d_header == 0x12 || d_header == 0x1A || d_header==0x22)
-       return true;
-    else 
-       return false;
-       
+  // Extracting ip header and Dscp type
+  Ptr<Ipv4QueueDiscItem> ip_packet = StaticCast<Ipv4QueueDiscItem> (item);
+  Ipv4Header m_header;
+  m_header = ip_packet->GetHeader ();
+  Ipv4Header::DscpType d_header = m_header.GetDscp ();
+  std::cout << d_header << "\n";
+
+  // Packets with DSCP type: DSCP_AF11, DSCP_AF21, DSCP_AF31 and DSCP_AF41 are considered to be IN else OUT pkt
+  //checking for In packets
+  if (d_header == 0x0A || d_header == 0x12 || d_header == 0x1A || d_header == 0x22)
+    {
+      return true;
+    }
+  else
+    {
+      return false;
+    }
+
 }
 
 /* variables added m_idleIn, m_countBytesIn, nQueuedIn */
@@ -236,7 +240,7 @@ RioQueueDisc::DoDequeue (void)
       m_idle = true;
       m_idleTime = Simulator::Now ();
 
-      p=0;
+      p = 0;
     }
   else
     {
@@ -248,13 +252,13 @@ RioQueueDisc::DoDequeue (void)
       NS_LOG_LOGIC ("Number packets " << GetInternalQueue (0)->GetNPackets ());
       NS_LOG_LOGIC ("Number bytes " << GetInternalQueue (0)->GetNBytes ());
 
-      p=item;
+      p = item;
     }
 
   if (p != 0)
     {
-     
-      m_flow = InOrOut(p);
+
+      m_flow = InOrOut (p);
       if (m_flow)
         {
           /* Regular In packets */
@@ -330,7 +334,7 @@ bool RioQueueDisc::DoEnqueue (Ptr<QueueDiscItem> item)
       /*Add ns3 equivalent */
       m_flow = InOrOut (item);
     }
-  
+
   uint32_t qLen;
   uint32_t qLenIn;
 
@@ -916,7 +920,7 @@ RioQueueDisc::InitializeParams (void)
 
   m_qAvg = 0.0;
   m_qAvgIn = 0.0;
-  m_count=0;
+  m_count = 0;
   m_countOut = 0;
   m_countIn = 0;
   m_countBytesOut = 0;

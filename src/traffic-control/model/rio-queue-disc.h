@@ -37,7 +37,7 @@ public:
 
   virtual ~RioQueueDisc ();
 
-  
+
 
   /**
    * \brief Stats
@@ -49,13 +49,13 @@ public:
     uint32_t qLimDrop;                  //!< Drops due to queue limits
     uint32_t unforcedMark;              //!< Early probability marks
     uint32_t forcedMark;                //!< Forced marks, qavg > max threshold
-    uint32_t dropIn;					//!< In pkt drops
-    uint32_t dropOut;					//!< Out pkt drops
+    uint32_t dropIn;                                    //!< In pkt drops
+    uint32_t dropOut;                                   //!< Out pkt drops
   } Stats;
 
   /* tells whether pkt is In or Out*/
-  bool InOrOut(Ptr<QueueDiscItem> item );
-  
+  bool InOrOut (Ptr<QueueDiscItem> item );
+
   /**
    * \brief Drop types
    */

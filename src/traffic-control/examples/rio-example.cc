@@ -56,17 +56,17 @@ CheckQueueSize (Ptr<QueueDisc> queue)
 
   avgQueueSize += qSize;
   avgQueueSizeIn += qSizeIn;
-  
+
   checkTimes++;
 
   // check queue size every 1/100 of a second
   Simulator::Schedule (Seconds (0.01), &CheckQueueSize, queue);
 
-  std::ofstream fPlotQueue (filePlotQueue.str ().c_str (), std::ios::out|std::ios::app);
+  std::ofstream fPlotQueue (filePlotQueue.str ().c_str (), std::ios::out | std::ios::app);
   fPlotQueue << Simulator::Now ().GetSeconds () << " " << qSize << std::endl;
   fPlotQueue.close ();
 
-  std::ofstream fPlotQueueAvg (filePlotQueueAvg.str ().c_str (), std::ios::out|std::ios::app);
+  std::ofstream fPlotQueueAvg (filePlotQueueAvg.str ().c_str (), std::ios::out | std::ios::app);
   fPlotQueueAvg << Simulator::Now ().GetSeconds () << " " << avgQueueSize / checkTimes << std::endl;
   fPlotQueueAvg.close ();
 }
@@ -74,51 +74,51 @@ CheckQueueSize (Ptr<QueueDisc> queue)
 void
 BuildAppsTest ()
 {
- 
-      // SINK is in the right side
-      uint16_t port = 50000;
-      Address sinkLocalAddress (InetSocketAddress (Ipv4Address::GetAny (), port));
-      PacketSinkHelper sinkHelper ("ns3::TcpSocketFactory", sinkLocalAddress);
-      ApplicationContainer sinkApp = sinkHelper.Install (n3n4.Get (1));
-      sinkApp.Start (Seconds (sink_start_time));
-      sinkApp.Stop (Seconds (sink_stop_time));
 
-      // Connection one
-      // Clients are in left side
-      /*
-       * Create the OnOff applications to send TCP to the server
-       * onoffhelper is a client that send data to TCP destination
-       */
-      OnOffHelper clientHelper1 ("ns3::TcpSocketFactory", Address ());
-      clientHelper1.SetAttribute ("OnTime", StringValue ("ns3::ConstantRandomVariable[Constant=1]"));
-      clientHelper1.SetAttribute ("OffTime", StringValue ("ns3::ConstantRandomVariable[Constant=0]"));
-      clientHelper1.SetAttribute 
-        ("DataRate", DataRateValue (DataRate ("10Mb/s")));
-      clientHelper1.SetAttribute 
-        ("PacketSize", UintegerValue (1000));
+  // SINK is in the right side
+  uint16_t port = 50000;
+  Address sinkLocalAddress (InetSocketAddress (Ipv4Address::GetAny (), port));
+  PacketSinkHelper sinkHelper ("ns3::TcpSocketFactory", sinkLocalAddress);
+  ApplicationContainer sinkApp = sinkHelper.Install (n3n4.Get (1));
+  sinkApp.Start (Seconds (sink_start_time));
+  sinkApp.Stop (Seconds (sink_stop_time));
 
-      ApplicationContainer clientApps1;
-      AddressValue remoteAddress
-        (InetSocketAddress (i3i4.GetAddress (1), port));
-      clientHelper1.SetAttribute ("Remote", remoteAddress);
-      clientApps1.Add (clientHelper1.Install (n0n2.Get (0)));
-      clientApps1.Start (Seconds (client_start_time));
-      clientApps1.Stop (Seconds (client_stop_time));
+  // Connection one
+  // Clients are in left side
+  /*
+   * Create the OnOff applications to send TCP to the server
+   * onoffhelper is a client that send data to TCP destination
+   */
+  OnOffHelper clientHelper1 ("ns3::TcpSocketFactory", Address ());
+  clientHelper1.SetAttribute ("OnTime", StringValue ("ns3::ConstantRandomVariable[Constant=1]"));
+  clientHelper1.SetAttribute ("OffTime", StringValue ("ns3::ConstantRandomVariable[Constant=0]"));
+  clientHelper1.SetAttribute
+    ("DataRate", DataRateValue (DataRate ("10Mb/s")));
+  clientHelper1.SetAttribute
+    ("PacketSize", UintegerValue (1000));
 
-      // Connection two
-      OnOffHelper clientHelper2 ("ns3::TcpSocketFactory", Address ());
-      clientHelper2.SetAttribute ("OnTime", StringValue ("ns3::ConstantRandomVariable[Constant=1]"));
-      clientHelper2.SetAttribute ("OffTime", StringValue ("ns3::ConstantRandomVariable[Constant=0]"));
-      clientHelper2.SetAttribute 
-        ("DataRate", DataRateValue (DataRate ("10Mb/s")));
-      clientHelper2.SetAttribute 
-        ("PacketSize", UintegerValue (1000));
+  ApplicationContainer clientApps1;
+  AddressValue remoteAddress
+    (InetSocketAddress (i3i4.GetAddress (1), port));
+  clientHelper1.SetAttribute ("Remote", remoteAddress);
+  clientApps1.Add (clientHelper1.Install (n0n2.Get (0)));
+  clientApps1.Start (Seconds (client_start_time));
+  clientApps1.Stop (Seconds (client_stop_time));
 
-      ApplicationContainer clientApps2;
-      clientHelper2.SetAttribute ("Remote", remoteAddress);
-      clientApps2.Add (clientHelper2.Install (n1n2.Get (0)));
-      clientApps2.Start (Seconds (3.0));
-      clientApps2.Stop (Seconds (client_stop_time));
+  // Connection two
+  OnOffHelper clientHelper2 ("ns3::TcpSocketFactory", Address ());
+  clientHelper2.SetAttribute ("OnTime", StringValue ("ns3::ConstantRandomVariable[Constant=1]"));
+  clientHelper2.SetAttribute ("OffTime", StringValue ("ns3::ConstantRandomVariable[Constant=0]"));
+  clientHelper2.SetAttribute
+    ("DataRate", DataRateValue (DataRate ("10Mb/s")));
+  clientHelper2.SetAttribute
+    ("PacketSize", UintegerValue (1000));
+
+  ApplicationContainer clientApps2;
+  clientHelper2.SetAttribute ("Remote", remoteAddress);
+  clientApps2.Add (clientHelper2.Install (n1n2.Get (0)));
+  clientApps2.Start (Seconds (3.0));
+  clientApps2.Stop (Seconds (client_stop_time));
 }
 
 int
