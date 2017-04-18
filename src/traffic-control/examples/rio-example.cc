@@ -52,7 +52,7 @@ void
 CheckQueueSize (Ptr<QueueDisc> queue)
 {
   uint32_t qSize = StaticCast<RioQueueDisc> (queue)->GetQueueSize ();
-  uint32_t qSizeIn = StaticCast<RioQueueDisc> (queue)->GetInQueueSize ();
+ /uint32_t qSizeIn = StaticCast<RioQueueDisc> (queue)->GetInQueueSize ();
 
   avgQueueSize += qSize;
   avgQueueSizeIn += qSizeIn;
@@ -64,6 +64,10 @@ CheckQueueSize (Ptr<QueueDisc> queue)
 
   std::ofstream fPlotQueue (filePlotQueue.str ().c_str (), std::ios::out | std::ios::app);
   fPlotQueue << Simulator::Now ().GetSeconds () << " " << qSize << std::endl;
+  fPlotQueue.close ();
+  
+   std::ofstream fPlotQueue (filePlotInQueue.str ().c_str (), std::ios::out | std::ios::app);
+  fPlotQueue << Simulator::Now ().GetSeconds () << " " << qSizeIn << std::endl;
   fPlotQueue.close ();
 
   std::ofstream fPlotQueueAvg (filePlotQueueAvg.str ().c_str (), std::ios::out | std::ios::app);
