@@ -298,6 +298,8 @@ RioQueueDiscTestCase::Enqueue (Ptr<RioQueueDisc> queue, uint32_t size, uint32_t 
 
       Ipv4Header::DscpType dscp = Ipv4Header::DSCP_AF11;
       hdr.SetDscp (dscp);
+      Ipv4Header::EcnType ecn= Ipv4Header::ECN_ECT1;
+  	  hdr.SetEcn (ecn);
       Ptr<Packet> p = Create<Packet> (size);
       Address dest;
       Ptr<QueueDiscItem> item = StaticCast<QueueDiscItem> (Create<Ipv4QueueDiscItem> (p, dest, 0, hdr));

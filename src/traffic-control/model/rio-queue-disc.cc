@@ -210,7 +210,7 @@ bool RioQueueDisc::InOrOut (Ptr<QueueDiscItem> item )
   Ipv4Header m_header;
   m_header = ip_packet->GetHeader ();
   Ipv4Header::DscpType d_header = m_header.GetDscp ();
-  std::cout << d_header << "\n";
+  //std::cout << d_header << "\n";
 
   // Packets with DSCP type: DSCP_AF11, DSCP_AF21, DSCP_AF31 and DSCP_AF41 are considered to be IN else OUT pkt
   //checking for In packets
@@ -251,6 +251,8 @@ RioQueueDisc::DoDequeue (void)
 
       NS_LOG_LOGIC ("Number packets " << GetInternalQueue (0)->GetNPackets ());
       NS_LOG_LOGIC ("Number bytes " << GetInternalQueue (0)->GetNBytes ());
+      NS_LOG_LOGIC ("Number IN packets " << m_inLen);
+      NS_LOG_LOGIC ("Number IN bytes " << m_inBcount);
 
       p = item;
     }
@@ -304,6 +306,24 @@ RioQueueDisc::GetQueueSize (void)
     }
 }
 
+uint32_t
+RioQueueDisc::GetInQueueSize (void)
+{
+  NS_LOG_FUNCTION (this);
+  if (GetMode () == QUEUE_DISC_MODE_BYTES)
+    {
+      return m_inBcount;
+    }
+  else if (GetMode () == QUEUE_DISC_MODE_PACKETS)
+    {
+      return m_inLen;
+    }
+  else
+    {
+      NS_ABORT_MSG ("Unknown RIO mode.");
+    }
+}
+
 /*
  * Receive a new packet arriving at the queue.
  * The average queue size is computed.  If the average size
@@ -349,31 +369,29 @@ bool RioQueueDisc::DoEnqueue (Ptr<QueueDiscItem> item)
       qLen = GetInternalQueue (0)->GetNPackets ();
       qLenIn = m_inLen;
     }
-  /*Add ns3 equivalent */
+   /*
+       * if we were idle, we pretend that m packets arrived during
+       * the idle period.  m is set to be the ptc times the amount
+       * of time we've been idle for
+       */
 
+  /* To account for the period when the queue was empty.  */
+      
+
+      /*
+       * count and count_bytes keeps a tally of arriving traffic
+       * that has not been dropped (i.e. how long, in terms of traffic,
+       * it has been since the last early drop)
+       */
   uint32_t m = 0;
+  uint32_t m_in = 0;
   Time now = Simulator::Now ();
   if (m_idle)
     {
       m_idle = false;
       m = uint32_t (m_ptc * (now - m_idleTime).GetSeconds ());
     }
-  m_qAvg = Estimator (qLen,m + 1,m_qAvg, m_qW);
-
-  if (m_flow)      /* Regular In packets */
-
-    {
-      /*
-       * if we were idle, we pretend that m packets arrived during
-       * the idle period.  m is set to be the ptc times the amount
-       * of time we've been idle for
-       */
-
-
-      uint32_t m_in = 0;
-
-      /* To account for the period when the queue was empty.  */
-      if (m_idleIn)
+    if (m_idleIn)
         {
           m_idleIn = false;
           m_in = uint32_t (m_ptc * (now - m_idleTime).GetSeconds ());
@@ -387,15 +405,18 @@ bool RioQueueDisc::DoEnqueue (Ptr<QueueDiscItem> item)
 
       // printf( "qlen %d\n", q_->length());
 
+  m_qAvg = Estimator (qLen,m + 1,m_qAvg, m_qW);
+  m_qAvgIn = Estimator (qLenIn,m_in + 1,m_qAvgIn, m_qW);
 
+  NS_LOG_DEBUG ("\t bytesInQueue  " << GetInternalQueue (0)->GetNBytes () << "\tQavg " << m_qAvg);
+  NS_LOG_DEBUG ("\t packetsInQueue  " << GetInternalQueue (0)->GetNPackets () << "\tQavg " << m_qAvg);
 
-      m_qAvgIn = Estimator (qLenIn,m_in + 1,m_qAvgIn, m_qW);
+  NS_LOG_DEBUG ("\t bytesInQueueIN  " << m_inBcount << "\tQavgIn " << m_qAvgIn);
+  NS_LOG_DEBUG ("\t packetsInQueueIN  " << m_inLen << "\tQavgIn " << m_qAvgIn<<"\n");
 
-      /*
-       * count and count_bytes keeps a tally of arriving traffic
-       * that has not been dropped (i.e. how long, in terms of traffic,
-       * it has been since the last early drop)
-       */
+  if (m_flow)      /* Regular In packets */
+
+    {
 
       ++m_count;
       m_countBytes += item->GetSize ();
@@ -509,6 +530,8 @@ bool RioQueueDisc::DoEnqueue (Ptr<QueueDiscItem> item)
 
       NS_LOG_LOGIC ("Number packets " << GetInternalQueue (0)->GetNPackets ());
       NS_LOG_LOGIC ("Number bytes " << GetInternalQueue (0)->GetNBytes ());
+      NS_LOG_LOGIC ("Number IN packets " << m_inLen);
+      NS_LOG_LOGIC ("Number IN bytes " << m_inBcount);
 
       return retval;
     }
@@ -634,6 +657,8 @@ bool RioQueueDisc::DoEnqueue (Ptr<QueueDiscItem> item)
 
       NS_LOG_LOGIC ("Number packets " << GetInternalQueue (0)->GetNPackets ());
       NS_LOG_LOGIC ("Number bytes " << GetInternalQueue (0)->GetNBytes ());
+      NS_LOG_LOGIC ("Number IN packets " << m_inLen);
+      NS_LOG_LOGIC ("Number IN bytes " << m_inBcount);
 
       return retval;
 
@@ -818,6 +843,8 @@ RioQueueDisc::DoPeek (void) const
 
   NS_LOG_LOGIC ("Number packets " << GetInternalQueue (0)->GetNPackets ());
   NS_LOG_LOGIC ("Number bytes " << GetInternalQueue (0)->GetNBytes ());
+  NS_LOG_LOGIC ("Number IN packets " << m_inLen);
+  NS_LOG_LOGIC ("Number IN bytes " << m_inBcount);
 
   return item;
 }

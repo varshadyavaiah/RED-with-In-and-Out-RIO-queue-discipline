@@ -102,6 +102,7 @@ public:
    * \returns The queue size in bytes or packets.
    */
   uint32_t GetQueueSize (void);
+  uint32_t GetInQueueSize (void);
 /**
    * \brief Set the limit of the queue.
    *
