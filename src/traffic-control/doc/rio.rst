@@ -1,18 +1,24 @@
 .. include:: replace.txt
 .. highlight:: cpp
 
-RED queue disc
+RIO queue disc
 ---------------------
 
 Random Early Detection In or Out (RIO), is a variant of RED, which is a 
 queue discipline that aims to provide early signals to transport protocol 
 congestion control. RIO uses the same mechanism as in RED, but is configured 
 with two different sets of parameters. When a packet flows in, it is 
-tagged as IN or OUT. Depending on if it is  IN or OUT, the router calculates 
-the corresponding parameters. This prevents a bunch of tail drop-losses that 
-could be because of TCP timeout, because they backoff gracefully. 
-Further, having a twin RED implementation can ensure a certain amount of 
-minimum assured capacity. 
+tagged as IN or OUT based on service profiles. Depending on if it is  IN or OUT, 
+the router calculates the corresponding parameters. This prevents a bunch of 
+tail drop-losses that could be because of TCP timeout, because they backoff gracefully,
+thus preventing, or pro-longing the advent of congestion. 
+
+Further, having a twin RED implementation, with different parameters, can ensure 
+a certain amount of minimum assured capacity. This is because whenever there is congestion, 
+the IN packets will be favoured over the OUT packets. Thus, the OUT packets
+will be dropped first to reduce congestion.
+
+
 
 Model Description
 *****************
@@ -55,9 +61,9 @@ attribute is set to false (it is true by default).
 
 The implementation of support for ECN marking is done in such a way as
 to not impose an internet module dependency on the traffic control module.
-The RED model does not directly set ECN bits on the header, but delegates
+The RIO model does not directly set ECN bits on the header, but delegates
 that job to the QueueDiscItem class.  As a result, it is possible to
-use RED queues for other non-IP QueueDiscItems that may or may not support
+use RIO queues for other non-IP QueueDiscItems that may or may not support
 the ``Mark ()`` method.
 
 References
@@ -100,7 +106,7 @@ Consult the ns-3 documentation for explanation of these attributes.
 Examples
 ========
 
-The RIO queue example is found at ``src/traffic-control/examples/rio-tests.cc``.
+The RIO queue example is found at ``src/traffic-control/examples/rio-example.cc``.
 
 Validation
 **********
@@ -119,4 +125,4 @@ The test suite can be run using the following commands:
   $ ./waf configure --enable-examples --enable-tests
   $ ./waf build
   $ ./test.py -s rio-queue-disc
-
+ 
